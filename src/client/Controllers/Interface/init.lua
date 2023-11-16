@@ -44,6 +44,7 @@ local Start = function()
 end
 
 function Interface:KnitStart()
+    self.MultiplierService = Knit.GetService("MultiplierService")
     task.spawn(Start)
 end
 

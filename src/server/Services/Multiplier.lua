@@ -8,8 +8,7 @@ local MultiplierService = Knit.CreateService {
     Client = {};
 }
 
-local DoubleCoinsId = 641865619
-local DoubleGemsId = 641706765
+local DoubleCoinsId = 655593490
 
 local function PlayerAdded(Player)
     local Bonuses = Instance.new("Folder")
@@ -26,10 +25,8 @@ local function PlayerAdded(Player)
 
     local function CheckForBonuses()
         local HasDoubleCoins = MarketplaceService:UserOwnsGamePassAsync(Player.UserId, DoubleCoinsId)
-        local HasDoubleGems = MarketplaceService:UserOwnsGamePassAsync(Player.UserId, DoubleGemsId)
 
         CoinsMultiplier.Value = HasDoubleCoins
-        GemsMultiplier.Value = HasDoubleGems
     end
 
     CheckForBonuses()
@@ -38,21 +35,16 @@ end
 function MultiplierService.Client:BuyMultiplier(Player, Type)
     if Type == "Coins" then
         MarketplaceService:PromptGamePassPurchase(Player, DoubleCoinsId)
-    elseif Type == "Gems" then
-        MarketplaceService:PromptGamePassPurchase(Player, DoubleGemsId)
     end
 end
 
 function MultiplierService.Client:CheckForBonuses(Player)
     local Bonuses = Player:WaitForChild("Bonuses")
     local CoinsMultiplier = Bonuses:WaitForChild("Coins")
-    local GemsMultiplier = Bonuses:WaitForChild("Gems")
 
     local HasDoubleCoins = MarketplaceService:UserOwnsGamePassAsync(Player.UserId, DoubleCoinsId)
-    local HasDoubleGems = MarketplaceService:UserOwnsGamePassAsync(Player.UserId, DoubleGemsId)
-
     CoinsMultiplier.Value = HasDoubleCoins
-    GemsMultiplier.Value = HasDoubleGems
+
 end
 
 Players.PlayerAdded:Connect(PlayerAdded)
@@ -67,10 +59,6 @@ MarketplaceService.PromptGamePassPurchaseFinished:Connect(function(Player, GameP
             local Bonuses = Player:WaitForChild("Bonuses")
             local CoinsMultiplier = Bonuses:WaitForChild("Coins")
             CoinsMultiplier.Value = true
-        elseif GamePassId == DoubleGemsId then
-            local Bonuses = Player:WaitForChild("Bonuses")
-            local GemsMultiplier = Bonuses:WaitForChild("Gems")
-            GemsMultiplier.Value = true
         end
     end
 end)
