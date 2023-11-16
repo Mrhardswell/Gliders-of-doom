@@ -19,13 +19,8 @@ local function PlayerAdded(Player)
     CoinsMultiplier.Name = "Coins"
     CoinsMultiplier.Parent = Bonuses
 
-    local GemsMultiplier = Instance.new("BoolValue")
-    GemsMultiplier.Name = "Gems"
-    GemsMultiplier.Parent = Bonuses
-
     local function CheckForBonuses()
         local HasDoubleCoins = MarketplaceService:UserOwnsGamePassAsync(Player.UserId, DoubleCoinsId)
-
         CoinsMultiplier.Value = HasDoubleCoins
     end
 

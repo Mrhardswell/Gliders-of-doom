@@ -42,14 +42,6 @@ function RewardService.Client:ClaimReward(Player, Index)
             local CoinsValue = DataTypeHandler:StringToNumber(Coins.Value)
             local Total = CoinsValue + RewardAmount
             Coins.Value = DataTypeHandler:AdaptiveNumberFormat(Total, 2)
-
-        elseif RewardType == "Gems" then
-            print(string.format("Gave %s gems to %s", tostring(RewardAmount), Player.Name))
-            local Gems = leaderstats:WaitForChild("Gems")
-            local GemsValue = DataTypeHandler:StringToNumber(Gems.Value)
-            local Total = GemsValue + RewardAmount
-            Gems.Value = DataTypeHandler:AdaptiveNumberFormat(Total, 2)
-
         elseif RewardType == "GoldenPickaxe" then
             print(string.format("Gave %s golden pickaxes to %s", tostring(RewardAmount), Player.Name))
         end

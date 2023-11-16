@@ -15,9 +15,9 @@ Rewards[2] = {
 }
 
 Rewards[3] = {
-    ["ImageID"] = "rbxassetid://15316876472",
-    ["Type"] = "Gems",
-    ["Amount"] = 25,
+    ["ImageID"] = "rbxassetid://15316822579",
+    ["Type"] = "Coins",
+    ["Amount"] = 2500,
     ["RequiredTime"] = 14400,
 }
 
@@ -29,29 +29,29 @@ Rewards[4] = {
 }
 
 Rewards[5] = {
-    ["ImageID"] = "rbxassetid://15316876472",
-    ["Type"] = "Gems",
-    ["Amount"] = 500,
+    ["ImageID"] = "rbxassetid://15316822579",
+    ["Type"] = "Coins",
+    ["Amount"] = 5000,
     ["RequiredTime"] = 36000,
 }
 
 Rewards[6] = {
-    ["ImageID"] = "rbxassetid://15316876472",
-    ["Type"] = "Gems",
-    ["Amount"] = 1000,
+    ["ImageID"] = "rbxassetid://15316822579",
+    ["Type"] = "Coins",
+    ["Amount"] = 10000,
     ["RequiredTime"] = 54000,
 }
 
 Rewards[7] = {
-    ["ImageID"] = "rbxassetid://15316876472", -- TODO: Change to GoldenPickaxe
+    ["ImageID"] = "rbxassetid://15316822579", -- TODO: Change to GoldenPickaxe
     ["Type"] = "GoldenPickaxe",
     ["Amount"] = 1,
     ["RequiredTime"] = 86400,
 }
 
 Rewards[8] = {
-    ["ImageID"] = "rbxassetid://15316876472",
-    ["Type"] = "Gems",
+    ["ImageID"] = "rbxassetid://15316822579",
+    ["Type"] = "Coins",
     ["Amount"] = 2500,
     ["RequiredTime"] = 144000,
 }

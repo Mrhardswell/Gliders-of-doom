@@ -11,9 +11,7 @@ local PlayerGui = Player.PlayerGui
 local HUD = PlayerGui:WaitForChild("HUD")
 local ValueDisplays = HUD:WaitForChild("ValueDisplays")
 
-local Messages = Knit.CreateController {
-    Name = "Messages",
-}
+local Messages = Knit.CreateController { Name = "Messages" }
 
 local Bindable = Instance.new("BindableFunction")
 
@@ -45,7 +43,7 @@ Net:Connect("BlockMessage", function(Message)
             Callback = Bindable;
         })
     else
-
+        if not Message.Text then print(Message, "Something Happened") return end
         local isKeyword = string.match(Message.Text, Keywords[1]) or string.match(Message.Text, Keywords[2])
         if isKeyword then
             local isUI = ValueDisplays:FindFirstChild(isKeyword)
