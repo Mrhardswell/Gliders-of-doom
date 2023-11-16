@@ -12,63 +12,19 @@ local Merchants = Knit.CreateService {
     Client = {};
 }
 
-local BlockData = require(script.Data)
-
 function Merchants:KnitStart()
     self.DataService = Knit.GetService("DataService")
 end
 
 function Merchants.RequestSell(Player, Merchant)
-    local BlockInventory = Player:FindFirstChild("BlockInventory")
-    if not BlockInventory then return end
     local leaderstats = Player:FindFirstChild("leaderstats")
     if not leaderstats then return end
     local Coins = leaderstats:FindFirstChild("Coins")
     if not Coins then return end
-
-    local Validated = false
-
-    for _, Block in BlockInventory:GetChildren() do
-        for Rarity, Data in BlockData do
-            if Data[Block.Name] then
-                local Value = Data[Block.Name]
-                if Value then
-                    local Worth = Value * Block.Value
-                    local CoinsValue = DataTypeHandler:StringToNumber(Coins.Value)
-
-                    local Total = CoinsValue + Worth
-                    Coins.Value = DataTypeHandler:AdaptiveNumberFormat(Total, 3)
-                    Block:Destroy()
-
-                    local Message = {
-                        Title = "Sold Block";
-                        Text = "You sold a " .. Block.Name .. " for " .. Worth .. if Rarity == "Common" or Rarity == "Rare" then " Coins" else " Gems";
-                        Duration = 5;
-                        Worth = Worth;
-                        Rarity = Rarity;
-                    }
-                    print(Message)
-                    BlockMessage:FireClient(Player, Message)
-                    task.wait(0.25)
-                end
-            end
-        end
-        Validated = true
-    end
-
-    if not Validated then
-        local Message = {
-            Title = "No Blocks";
-            Text = "You have no blocks to sell";
-            Duration = 5;
-        }
-
-        BlockMessage:FireClient(Player, Message)
-    end
-
+    print("Coins: " .. Coins.Value)
 end
 
-local VIPID = 641890482
+local VIPID = 656809264
 local GroupID = 33193007
 
 function Merchants.Client:ClaimReward(Player, Reward)
@@ -84,9 +40,11 @@ function Merchants.Client:ClaimReward(Player, Reward)
             local CurrentData = self.Server.DataService.DataCache[Player]
             local Data = CurrentData.Data
             local LastClaimedDate = Data[rewardType .. "RewardsLastClaimed"]
+
             if not LastClaimedDate then
                 CurrentData.Data[rewardType .. "RewardsLastClaimed"] = os.date("*t")
             end
+
             if LastClaimedDate.day then
                 if LastClaimedDate.day == os.date("!*t").day then
                     local Message = {
@@ -113,10 +71,11 @@ function Merchants.Client:ClaimReward(Player, Reward)
     end
 
     if Reward == "VIP" then
-        claimReward("VIP", 50, VIPID)
+        claimReward("VIP", 250, VIPID)
     elseif Reward == "Group" then
         claimReward("Group", 100, GroupID)
     end
+
 end
 
 return Merchants
