@@ -17,9 +17,7 @@ local CurrentGui = Instance.new("ObjectValue")
 
 local LoadedViews = {}
 
-local Keys = {
-    Backpack = Enum.KeyCode.B;
-}
+local Keys = { Backpack = Enum.KeyCode.B }
 
 local Start = function()
     for _, View in _View:GetChildren() do

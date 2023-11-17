@@ -31,7 +31,9 @@ local function CreateValues(Data, Player)
 	leaderstats.Name = "leaderstats"
 	leaderstats.Parent = Player
 
-
+	local Inventory = Instance.new("Folder")
+	Inventory.Name = "Inventory"
+	Inventory.Parent = Player
 	if Data["leaderstats"] then
 		for Name, Value in pairs(Data["leaderstats"]) do
 			local item = Instance.new("StringValue")
@@ -53,6 +55,35 @@ local function CreateValues(Data, Player)
 			if DataCache[Player] == nil then return end
 			DataCache[Player].Data["TotalPlaytime"] = TotalPlaytime.Value
 		end)
+	end
+
+	if Data["Inventory"] then
+		Inventory.Changed:Connect(function()
+			local inventoryData = {}
+			for _, Item in Inventory:GetChildren() do
+				inventoryData[Item.Name] = Item.Value
+			end
+			DataCache[Player].Data["Inventory"] = inventoryData
+		end)
+
+		for Index, Item in Data["Inventory"] do
+			local item = Instance.new("BoolValue")
+			item.Name = Index
+			item.Parent = Inventory
+			item.Value = Item
+			item.Changed:Connect(function()
+				DataCache[Player].Data["Inventory"][Index] = item.Value
+			end)
+		end
+	end
+
+	if Data["Settings"] then
+		for Index, Value in Data["Settings"] do
+			Player:SetAttribute(Index, Value)
+			Player:GetAttributeChangedSignal(Index):Connect(function()
+				DataCache[Player].Data["Settings"][Index] = Player:GetAttribute(Index)
+			end)
+		end
 	end
 
 end
