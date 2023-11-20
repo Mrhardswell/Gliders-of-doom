@@ -13,13 +13,26 @@ local Glider = Knit.CreateController {
 local Connection
 local Camera = workspace.CurrentCamera
 
+local function getMass(model)
+    assert(model and model:IsA("Model"), "Model argument of getMass must be a model.");
+    local mass = 0;
+    for i,v in pairs(model:GetDescendants()) do
+        if(v:IsA("BasePart")) then
+            mass += v:GetMass();
+        end
+    end
+    return mass;
+end
+
 local function CharacterAdded(Character)
     local Humanoid = Character:WaitForChild("Humanoid")
     local humanoidRootPart = Character:WaitForChild("HumanoidRootPart")
     if humanoidRootPart then
+
         local BodyGyro = Instance.new("BodyGyro")
         BodyGyro.MaxTorque = Vector3.new(0, 0, 0)
-        BodyGyro.P = 100000
+        BodyGyro.P = getMass(Character) * 10000
+
         BodyGyro.D = 1000
         BodyGyro.Parent = humanoidRootPart
 
@@ -28,9 +41,9 @@ local function CharacterAdded(Character)
         end
 
         Connection = RunService.RenderStepped:Connect(function()
-            if Humanoid:GetState() == Enum.HumanoidStateType.Freefall then
+            if Humanoid:GetState() == (Enum.HumanoidStateType.Freefall or Enum.HumanoidStateType.FallingDown) then
                 local CameraCF = Camera.CFrame
-                BodyGyro.MaxTorque = Vector3.new(5000, 100, 100)
+                BodyGyro.MaxTorque = Vector3.new(4500, 100, 100)
                 BodyGyro.CFrame = CameraCF
             else
                 BodyGyro.MaxTorque = Vector3.new(0, 0, 0)

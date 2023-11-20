@@ -1,12 +1,9 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
 
 local UISounds = SoundService.UI
 
 local Players = game:GetService("Players")
-
-local Knit = require(ReplicatedStorage.Packages.Knit)
 
 local Player = Players.LocalPlayer
 local Inventory = Player:WaitForChild("Inventory")
@@ -94,7 +91,6 @@ function Backpack.new(ScreenGui, Interface)
             Data = Item
         }
     end
-
 
     return self
 end

@@ -27,7 +27,8 @@ TimeLeft.Value = MatchTime
 
 local Game = Knit.CreateService {
     Name = "GameService" ,
-    Client = {}
+    Client = {},
+    GameState = Instance.new("StringValue"),
 }
 
 local Nodes = CollectionService:GetTagged("Node")
@@ -35,6 +36,7 @@ local CurrentMatch = nil
 
 function Game:StartTimer()
     if CurrentMatch then CurrentMatch:Disconnect() end
+    self.GameState.Value = "In Progress"
 
     CurrentMatch = RunService.Heartbeat:Connect(function(delta)
         Current = Current + delta
@@ -53,9 +55,12 @@ function Game:StartTimer()
 end
 
 function Game:EndMatch()
+    self.GameState.Value = "Ended"
+
     for _, Player in self.RegisteredPlayers do
         Player:LoadCharacter()
     end
+
     self:StartTimer()
 end
 
@@ -128,6 +133,8 @@ function Game:KnitInit()
 end
 
 function Game:KnitStart()
+    self.GameState.Value = "Waiting"
+
     for _, Player in Players:GetPlayers() do
         self:RegisterPlayer(Player)
     end

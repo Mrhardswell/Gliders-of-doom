@@ -123,8 +123,6 @@ function Gifts.new(ScreenGui, Interface)
 
         Reward.OriginalSize = Reward.Icon.Size
 
-
-
         Reward.Button:SetAttribute("Hovered", false)
 
         Reward.Tweens = {
@@ -144,8 +142,6 @@ function Gifts.new(ScreenGui, Interface)
         Reward.Button.Parent = self.List
         self.Rewards[Index] = Reward
     end
-
-    
 
     self.UpdateRewards = function()
         local Playtime = TotalPlaytime.Value
@@ -218,9 +214,13 @@ function Gifts.new(ScreenGui, Interface)
             NextRewardText = self.Rewards[NextReward].TimeLeft.Text
         end
 
+        local TEXT = string.format("GIFT IN %s", NextRewardText)
 
+        if NextRewardText == "Claim" then
+            TEXT = "GIFT AVAILABLE"
+        end
 
-        Label.Text = string.format("GIFT IN %s", NextRewardText)
+        Label.Text = TEXT
 
     end
 
