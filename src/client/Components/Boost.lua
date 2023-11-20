@@ -1,8 +1,10 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local SoundService = game:GetService("SoundService")
+local Players = game:GetService("Players")
 
 local Knit = require(ReplicatedStorage.Packages.Knit)
 
+local Player = Players.LocalPlayer
 local SFX = SoundService.SFX
 
 local Boost = Knit.Component.new {
@@ -24,8 +26,8 @@ local function getMass(model)
     return mass;
 end
 
-local BoostStrength = nil
 local Cooldown = 1
+local BodyThrust = Instance.new("BodyThrust")
 
 function Boost.Start(self)
     self.Pad.Touched:Connect(function(Hit)
@@ -40,10 +42,17 @@ function Boost.Start(self)
             return
         end
 
-        BoostStrength = getMass(Hit.Parent) * 100000
         Humanoid:ChangeState(Enum.HumanoidStateType.Freefall)
         SFX.Boost:Play()
-        Root.Velocity = Root.CFrame.LookVector + Vector3.new(0, 0.01, 0) * BoostStrength
+        local CurrentMass = getMass(Hit.Parent)
+        -- trust up and forward with more than the player's mass
+        BodyThrust.Force = Vector3.new(0, CurrentMass * 1.5, CurrentMass * 10000)
+        BodyThrust.Location = Root.Position
+        BodyThrust.Parent = Root
+
+        task.wait(Cooldown)
+        BodyThrust.Parent = nil
+
         Root:SetAttribute("Boost", false)
 
     end)
