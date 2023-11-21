@@ -18,7 +18,6 @@ local Start = function(self)
     local DesiredWind = Vector3.new(0, 0, -4)
     workspace.GlobalWind = DesiredWind
 
-    print("Aerodynamic service started")
 end
 
 function Aerodynamic:KnitStart()
