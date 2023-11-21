@@ -118,7 +118,7 @@ local function PlayerAdded(player : Player)
 	else
 		player:Kick("Unable to Load Saved data. Please Rejoin the game, if this issue persists please contact a developer")
 	end
-
+	player:LoadCharacter()
 end
 
 local function PlayerRemoved(Player)

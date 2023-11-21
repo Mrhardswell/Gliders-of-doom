@@ -15,7 +15,7 @@ local Start = function(self)
     self.Game = Knit.GetService("GameService")
     self.GameState = self.Game.GameState
 
-    local DesiredWind = Vector3.new(0, 0, -6)
+    local DesiredWind = Vector3.new(0, 0, -4)
     workspace.GlobalWind = DesiredWind
 
     print("Aerodynamic service started")

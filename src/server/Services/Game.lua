@@ -16,6 +16,7 @@ local Knit = require(ReplicatedStorage.Packages.Knit)
 local Net = require(ReplicatedStorage.Packages.Net)
 
 local GameUpdate = Net:RemoteEvent("GameUpdate")
+local Reset = Net:RemoteEvent("Reset")
 
 local MatchTime = 360
 local Current = 0
@@ -33,6 +34,15 @@ local Game = Knit.CreateService {
 
 local Nodes = CollectionService:GetTagged("Node")
 local CurrentMatch = nil
+
+function Game.Client:Respawn(Player)
+    task.wait(2)
+    Player:LoadCharacter()
+end
+
+function Game.Client:RespawnNow(Player)
+    Player:LoadCharacter()
+end
 
 function Game:StartTimer()
     if CurrentMatch then CurrentMatch:Disconnect() end
@@ -56,11 +66,7 @@ end
 
 function Game:EndMatch()
     self.GameState.Value = "Ended"
-
-    for _, Player in self.RegisteredPlayers do
-        Player:LoadCharacter()
-    end
-
+    Reset:FireAllClients()
     self:StartTimer()
 end
 

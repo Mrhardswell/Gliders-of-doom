@@ -17,6 +17,7 @@ function Merchant:Construct()
 end
 
 function Merchant.Start(self)
+    repeat task.wait() until Knit.Started
     local Merchants = Knit.GetService("Merchants")
 
     local _Data = Data[self.Type]

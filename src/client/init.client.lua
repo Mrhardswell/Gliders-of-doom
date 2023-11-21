@@ -15,3 +15,5 @@ end
 
 Knit.AddControllers(script.Controllers)
 Knit.Start():catch(warn)
+
+Knit.FullyStarted = true
