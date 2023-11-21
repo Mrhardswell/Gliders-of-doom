@@ -36,11 +36,6 @@ local Nodes = CollectionService:GetTagged("Node")
 local CurrentMatch = nil
 
 function Game.Client:Respawn(Player)
-    task.wait(2)
-    Player:LoadCharacter()
-end
-
-function Game.Client:RespawnNow(Player)
     Player:LoadCharacter()
 end
 

@@ -113,7 +113,7 @@ local function Reset()
             Inactive.Transparency = 1
         end
     end
-    GameService:RespawnNow()
+    GameService:Respawn()
 end
 
 Player.CharacterAdded:Connect(function(Character)
