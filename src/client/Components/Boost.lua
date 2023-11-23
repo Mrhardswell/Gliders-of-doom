@@ -5,6 +5,8 @@ local TweenService = game:GetService("TweenService")
 
 local Knit = require(ReplicatedStorage.Packages.Knit)
 
+local GliderController = nil
+
 local Player = Players.LocalPlayer
 local SFX = SoundService.SFX
 
@@ -27,14 +29,29 @@ local function getMass(model)
 end
 
 local Cooldown = 1
-local BodyVelocity = Instance.new("BodyVelocity")
 
 function Boost.Start(self)
+    repeat task.wait() until Knit.FullyStarted
+
+    if not GliderController then
+        GliderController = Knit.GetController("GliderController")
+    end
+
     self.Pad.Touched:Connect(function(Hit)
         local Root = Hit.Parent:FindFirstChild("HumanoidRootPart")
         local Humanoid = Hit.Parent:FindFirstChild("Humanoid")
+        
         if not Root then return end
         if not Humanoid then return end
+
+        local Character = Hit.Parent
+        local Glider = GliderController.GetGlider(Character)
+
+        local Boost = Glider:FindFirstChild("Boost", true)
+        if not Boost then print("Glider has no boost attachment") return end
+
+        local VectorForce = Boost:FindFirstChild("VectorForce")
+        if not VectorForce then print("Boost has no vector force") return end
 
         local isPlayer = Players:GetPlayerFromCharacter(Hit.Parent)
         if isPlayer then
@@ -49,25 +66,26 @@ function Boost.Start(self)
             return
         end
 
-        local Power = self.Pad:GetAttribute("Power")
-
+        local PushPower = self.Pad:GetAttribute("PushPower")
+        local PushDirection = self.Pad:GetAttribute("PushDirection")
         local CurrentMass = getMass(Hit.Parent)
-        local TweenUp = TweenService:Create(BodyVelocity, TweenInfo.new(0.75), {Velocity = Vector3.new(0, Power * CurrentMass, -Power * CurrentMass)})
 
-        Humanoid:ChangeState(Enum.HumanoidStateType.Freefall)
+        VectorForce.RelativeTo = Enum.ActuatorRelativeTo.World
+
+        local AccumulatedForce = Character:GetAttribute("AcumulatedForce") or 0
+        local CurrentForce = VectorForce.Force
+
+        local BaseResult = CurrentMass * PushPower + AccumulatedForce + CurrentForce.Z
+
+        local TargetForce = Vector3.new(CurrentForce.Z, CurrentForce.Y + BaseResult * PushDirection.Y, CurrentForce.Z + BaseResult * PushDirection.Z)
+
+        VectorForce.Force = TargetForce
+
+        Character:SetAttribute("AcumulatedForce", TargetForce.Z)
 
         SFX.Boost:Play()
 
-        BodyVelocity.Parent = Root
-        BodyVelocity.MaxForce = Vector3.new(100000, 100000, 100000)
-
-        TweenUp:Play()
-        TweenUp.Completed:Wait()
-        TweenUp:Destroy()
-
-        BodyVelocity.Parent = nil
-        BodyVelocity.Velocity = Vector3.new(0, 0, 0)
-
+        task.wait(Cooldown)
         Root:SetAttribute("Boost", false)
 
     end)

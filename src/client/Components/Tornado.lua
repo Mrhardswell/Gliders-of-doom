@@ -8,6 +8,8 @@ local SFX = SoundService.SFX
 
 local Knit = require(ReplicatedStorage.Packages.Knit)
 
+local GliderController = nil
+
 local Tornado = Knit.Component.new {
     Tag = "Tornado",
 }
@@ -27,9 +29,15 @@ local function getMass(model)
 end
 
 local Cooldown = 1
-local BodyVelocity = Instance.new("BodyVelocity")
+local MaxForce = 10000
 
 function Tornado.Start(self)
+    repeat task.wait() until Knit.FullyStarted
+
+    if not GliderController then
+        GliderController = Knit.GetController("GliderController")
+    end
+
     if not self.Model.PrimaryPart then print("No primary part", self.Model) return end
     local Moving = self.Model:GetAttribute("Moving")
     if Moving then
@@ -51,6 +59,15 @@ function Tornado.Start(self)
         if not Root then return end
         if not Humanoid then return end
 
+        local Character = Hit.Parent
+        local Glider = GliderController.GetGlider(Character)
+
+        local Boost = Glider:FindFirstChild("Boost", true)
+        if not Boost then print("Glider has no boost attachment") return end
+
+        local VectorForce = Boost:FindFirstChild("VectorForce")
+        if not VectorForce then print("Boost has no vector force") return end
+    
         local isPlayer = Players:GetPlayerFromCharacter(Hit.Parent)
         if isPlayer then
             if isPlayer ~= Player then
@@ -68,20 +85,16 @@ function Tornado.Start(self)
         local PushDirection = self.Model:GetAttribute("PushDirection")
 
         local CurrentMass = getMass(Hit.Parent)
-        local TweenUp = TweenService:Create(BodyVelocity, TweenInfo.new(0.75), {Velocity = Vector3.new(PushDirection.X * PushPower * CurrentMass, PushDirection.Y * PushPower * CurrentMass, PushDirection.Z * PushPower * CurrentMass)})
+        local CurrentForce = VectorForce.Force
+        local TargetForce = Vector3.new(0, PushPower + CurrentMass * PushDirection.Y, CurrentForce.Z)
+
+        local Tween = TweenService:Create(VectorForce, TweenInfo.new(Cooldown, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Force = TargetForce})
+        Tween:Play()
 
         SFX.Boost:Play()
+        Tween.Completed:Wait()
 
-        BodyVelocity.Parent = Root
-        BodyVelocity.MaxForce = Vector3.new(100000, 100000, 100000)
-
-        TweenUp:Play()
-        TweenUp.Completed:Wait()
-        TweenUp:Destroy()
-
-        BodyVelocity.Parent = nil
-        BodyVelocity.Velocity = Vector3.new(0, 0, 0)
-
+        Character:SetAttribute("AcumulatedForce", TargetForce.Z)
         Root:SetAttribute("Tornado", false)
     end)
 end
