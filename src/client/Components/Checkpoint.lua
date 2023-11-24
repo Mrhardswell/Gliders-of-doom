@@ -1,6 +1,8 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local CollectionService = game:GetService("CollectionService")
 local RunService = game:GetService("RunService")
+local SoundService = game:GetService("SoundService")
+local StarterGui = game:GetService("StarterGui")
 
 local Knit = require(ReplicatedStorage.Packages.Knit)
 local Net = require(ReplicatedStorage.Packages.Net)
@@ -17,6 +19,8 @@ local Player = game.Players.LocalPlayer
 local Character = Player.Character or Player.CharacterAdded:Wait()
 
 local GameService
+
+local PreviouslyUnlocked = {}
 
 local Checkpoint = Knit.Component.new {
     Tag = "Checkpoint",
@@ -45,8 +49,9 @@ end
 local Connection
 local Interval = 0.5
 local Current = 0
+local RewardAmount = 10
 
-local function TrackCharacter(Character)
+local function TrackCharacter(Character : Model)
     local Root = Character:WaitForChild("HumanoidRootPart")
     if not Root then print("No root") return end
     if Connection then Connection:Disconnect() end
@@ -65,30 +70,51 @@ local function TrackCharacter(Character)
         if Connection then Connection:Disconnect() end
         GameService:Respawn():andThen(function()
             local Character = Player.Character or Player.CharacterAdded:Wait()
-            if not ActiveCheckpoint.Value then return end
+            if not ActiveCheckpoint.Value then return
+            elseif ActiveCheckpoint.Value == nil then return end
+            local isBase = ActiveCheckpoint.Value:FindFirstChild("Base")
+            if not isBase then return end
             Character:PivotTo(CFrame.new(ActiveCheckpoint.Value.Base.Position))
         end)
     end)
 
+    ActiveCheckpoint.Changed:Connect(function()
+        if PreviouslyUnlocked[ActiveCheckpoint.Value] then return end
+        PreviouslyUnlocked[ActiveCheckpoint.Value] = true
+
+        local Active = ActiveCheckpoint.Value
+        SoundService.SFX.Checkpoint:Play()
+
+        GameService:CheckpointReached():andThen(function(_RewardAmount)
+            RewardAmount = _RewardAmount
+        end):await()
+
+        StarterGui:SetCore("SendNotification", {
+            Title = "Checkpoint";
+            Text = string.format("Checkpoint reached, earned %s coins", tostring(RewardAmount));
+            Duration = 2;
+        })
+
+    end)
+
 end
+
+local ClosestCheckpoint
 
 CurrentPosition.Changed:Connect(function()
     local Position = CurrentPosition.Value
-    local ClosestCheckpoint
+    
     local ClosestDistance = math.huge
     local Checkpoints = Checkpoint:GetAll()
 
     for _, Checkpoint in Checkpoints do
         local isBehindCharacter = -Position.Z >= -Checkpoint.Position.Z
-
         if not isBehindCharacter then continue end
-
         local Magnitude = (Position - Checkpoint.Position).Magnitude
         if Magnitude < ClosestDistance then
             ClosestCheckpoint = Checkpoint
             ClosestDistance = Magnitude
         end
-
     end
 
     if ClosestCheckpoint then
@@ -105,6 +131,7 @@ end)
 
 local function Reset()
     ActiveCheckpoint.Value = nil
+    PreviouslyUnlocked = {}
     for _, Checkpoint in Checkpoint:GetAll() do
         local Active = Checkpoint.Model:FindFirstChild("Active")
         local Inactive = Checkpoint.Model:FindFirstChild("Inactive")
@@ -116,12 +143,8 @@ local function Reset()
     GameService:Respawn()
 end
 
-Player.CharacterAdded:Connect(function(Character)
-    task.spawn(function() TrackCharacter(Character)  end)
-end)
-
-task.spawn(function() TrackCharacter(Character) end)
-
+Player.CharacterAdded:Connect(TrackCharacter)
+task.spawn(TrackCharacter, Character)
 Net:Connect("Reset", Reset)
 
 return Checkpoint

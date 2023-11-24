@@ -15,12 +15,15 @@ local PlayerIcon = ProgressIcon.PlayerIcon
 local Knit = require(ReplicatedStorage.Packages.Knit)
 local Net = require(ReplicatedStorage.Packages.Net)
 
+local DataTypeHandler = require(ReplicatedStorage.Shared.Modules.DataTypeHandler)
+
 local GameUpdate = Net:RemoteEvent("GameUpdate")
 local Reset = Net:RemoteEvent("Reset")
 
 local MatchTime = 360
 local Current = 0
 local Interval = 1
+local RewardAmount = 10
 
 local TimeLeft = Instance.new("NumberValue",ReplicatedStorage)
 TimeLeft.Name = "TimeLeft"
@@ -37,6 +40,19 @@ local CurrentMatch = nil
 
 function Game.Client:Respawn(Player)
     Player:LoadCharacter()
+end
+
+function Game.Client:CheckpointReached(Player)
+    local leaderstats = Player:FindFirstChild("leaderstats")
+    if not leaderstats then return end
+
+    local Coins = leaderstats:FindFirstChild("Coins")
+    if not Coins then return end
+
+    local CurrentCoins = DataTypeHandler:StringToNumber(Coins.Value)
+    Coins.Value = DataTypeHandler:NumberToString(CurrentCoins + RewardAmount)
+
+    return RewardAmount
 end
 
 function Game:StartTimer()

@@ -29,6 +29,31 @@ function DataTypesHandler:Length(Dictionary)
 	return counter
 end
 
+function DataTypesHandler:NumberToString(Number)
+	if not Number then
+		return "0"
+	end
+	if Number > -1000 and Number < 1000 then
+		return tostring(math.floor(Number))
+	end
+	local IsNegative = Number < 0
+	Number = math.abs(math.floor(Number))
+	for Index = #ABBREVIATIONS, 1, -1 do
+		local Unit = ABBREVIATIONS[Index]
+		local Size = 10 ^ (Index * 3)
+		if Size <= Number then
+			Number = self:Round(Number / Size, 2)
+			if Number == 1000 and Index < #ABBREVIATIONS then
+				Number = 1
+				Unit = ABBREVIATIONS[Index][Index + 1]
+			end
+			Number = string.format("%.2f", Number) .. Unit
+			break
+		end
+	end
+	return (IsNegative and "-" .. Number) or Number
+end
+
 function DataTypesHandler:SortDictionary(Dictionary, SortFunction)
 	local array = {}
 	for key, value in pairs(Dictionary) do

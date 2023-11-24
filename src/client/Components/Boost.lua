@@ -18,14 +18,14 @@ function Boost:Construct()
     self.Pad = self.Instance
 end
 
-local function getMass(model)
-    local mass = 0;
-    for _, Item in model:GetDescendants() do
-        if Item:IsA("BasePart") or Item:IsA("MeshPart") then
-            mass += Item:GetMass();
+local function getMass(Model)
+    local Mass = 0
+    for i, Object in Model:GetDescendants() do
+        if Object:IsA("BasePart") or Object:IsA("MeshPart") then
+            Mass += Object:GetMass()
         end
     end
-    return mass;
+    return Mass
 end
 
 local Cooldown = 1
@@ -77,15 +77,15 @@ function Boost.Start(self)
 
         local BaseResult = CurrentMass * PushPower + AccumulatedForce + CurrentForce.Z
 
-        local TargetForce = Vector3.new(CurrentForce.Z, CurrentForce.Y + BaseResult * PushDirection.Y, CurrentForce.Z + BaseResult * PushDirection.Z)
+        local TargetForce = Vector3.new(0, CurrentForce.Y + BaseResult * PushDirection.Y, -math.abs(CurrentForce.Z + BaseResult * PushDirection.Z))
 
         VectorForce.Force = TargetForce
 
         Character:SetAttribute("AcumulatedForce", TargetForce.Z)
 
         SFX.Boost:Play()
-
         task.wait(Cooldown)
+
         Root:SetAttribute("Boost", false)
 
     end)

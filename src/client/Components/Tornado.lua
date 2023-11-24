@@ -18,18 +18,17 @@ function Tornado:Construct()
     self.Model = self.Instance
 end
 
-local function getMass(model)
-    local mass = 0;
-    for _, Item in model:GetDescendants() do
-        if Item:IsA("BasePart") or Item:IsA("MeshPart") then
-            mass += Item:GetMass();
+local function getMass(Model)
+    local Mass = 0
+    for i, Object in Model:GetDescendants() do
+        if Object:IsA("BasePart") or Object:IsA("MeshPart") then
+            Mass += Object:GetMass()
         end
     end
-    return mass;
+    return Mass
 end
 
 local Cooldown = 1
-local MaxForce = 10000
 
 function Tornado.Start(self)
     repeat task.wait() until Knit.FullyStarted
@@ -56,6 +55,7 @@ function Tornado.Start(self)
     self.Model.PrimaryPart.Touched:Connect(function(Hit)
         local Root = Hit.Parent:FindFirstChild("HumanoidRootPart")
         local Humanoid = Hit.Parent:FindFirstChild("Humanoid")
+
         if not Root then return end
         if not Humanoid then return end
 
@@ -83,19 +83,17 @@ function Tornado.Start(self)
 
         local PushPower = self.Model:GetAttribute("PushPower")
         local PushDirection = self.Model:GetAttribute("PushDirection")
-
         local CurrentMass = getMass(Hit.Parent)
         local CurrentForce = VectorForce.Force
-        local TargetForce = Vector3.new(0, PushPower + CurrentMass * PushDirection.Y, CurrentForce.Z)
-
+        local TargetForce = Vector3.new(0, PushPower + CurrentMass * PushDirection.Y, -math.abs(CurrentForce.Z))
         local Tween = TweenService:Create(VectorForce, TweenInfo.new(Cooldown, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Force = TargetForce})
-        Tween:Play()
 
         SFX.Boost:Play()
+        Tween:Play()
         Tween.Completed:Wait()
-
         Character:SetAttribute("AcumulatedForce", TargetForce.Z)
         Root:SetAttribute("Tornado", false)
+
     end)
 end
 

@@ -111,6 +111,7 @@ function Hud.new(ScreenGui, Interface)
 
     Coins:GetPropertyChangedSignal("Value"):Connect(function()
         self.ValueDisplays.Coins.Amount.Text = Coins.Value
+        
     end)
 
     -- Invite Button

@@ -15,7 +15,7 @@ local Start = function(self)
     self.Game = Knit.GetService("GameService")
     self.GameState = self.Game.GameState
 
-    local DesiredWind = Vector3.new(0, 1, -4)
+    local DesiredWind = Vector3.new(0, 0, 0)
     local DesiredAirDensity = 0.04
 
     workspace.GlobalWind = DesiredWind
