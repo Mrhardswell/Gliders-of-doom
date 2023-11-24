@@ -14,17 +14,18 @@ local leaderstats = Player:WaitForChild("leaderstats")
 
 local Coins = leaderstats:WaitForChild("Coins")
 
+local Tween_Infos = {
+    Hovered = TweenInfo.new(0.15, Enum.EasingStyle.Sine , Enum.EasingDirection.Out),
+    Unhovered = TweenInfo.new(0.15, Enum.EasingStyle.Bounce , Enum.EasingDirection.Out),
+    PopUp = TweenInfo.new(.2, Enum.EasingStyle.Sine , Enum.EasingDirection.Out, 0, true),
+}
+
 local function HandleButton(Button, Interface)
     Buttons[Button.Name] = {}
     Buttons[Button.Name].Button = Button
 
     local ButtonImage = Button:FindFirstChildWhichIsA("ImageLabel")
     local OriginalSize = ButtonImage.Size
-
-    local Tween_Infos = {
-        Hovered = TweenInfo.new(0.15, Enum.EasingStyle.Sine , Enum.EasingDirection.Out),
-        Unhovered = TweenInfo.new(0.15, Enum.EasingStyle.Bounce , Enum.EasingDirection.Out),
-    }
 
     local Goals = {
         Normal = { Rotation = 0, Size = OriginalSize},
@@ -106,12 +107,30 @@ function Hud.new(ScreenGui, Interface)
 
     -- Values
     self.ValueDisplays.Coins.Amount.Text = Coins.Value
-
     self.PreviousCoins = Coins.Value
+    local CoinIcon = Player.PlayerGui.HUD.ValueDisplays.Coins.Icon
 
     Coins:GetPropertyChangedSignal("Value"):Connect(function()
         self.ValueDisplays.Coins.Amount.Text = Coins.Value
-        
+        SoundService.UI.Coin:Play()
+        if not CoinIcon then return end
+        local CoinIconSize = CoinIcon.Size
+
+
+        local Tween = TweenService:Create(CoinIcon, Tween_Infos.PopUp, {
+            Size = CoinIconSize + UDim2.new(0, 5, 0, 5);
+        })
+
+        local TextTween = TweenService:Create(self.ValueDisplays.Coins.Amount, Tween_Infos.PopUp, {
+            Size = self.ValueDisplays.Coins.Amount.Size + UDim2.new(0, 5, 0, 5);
+        })
+
+        Tween:Play()
+        TextTween:Play()
+        Tween.Completed:Wait()
+        Tween:Destroy()
+        TextTween:Destroy()
+        print("Coins changed")
     end)
 
     -- Invite Button

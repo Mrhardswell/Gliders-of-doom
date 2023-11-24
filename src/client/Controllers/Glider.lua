@@ -110,7 +110,7 @@ local function CharacterAdded(Character)
                         CameraAngle = CameraAngle / 2
                     end
 
-                    AcumulatedForce += (if CameraAngle > 0.1 then CameraAngle * 1 -(Velocity.Z)  else CameraAngle * 1 + (Velocity.Z))
+                    AcumulatedForce += (if CameraAngle > 0.1 then CameraAngle * 1 -(Velocity.Z)  else CameraAngle * 1 + (Velocity.Z/2))
 
                     if AcumulatedForce > MaxForce then
                         AcumulatedForce = MaxForce

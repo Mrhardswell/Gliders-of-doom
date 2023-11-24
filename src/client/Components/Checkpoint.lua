@@ -79,6 +79,7 @@ local function TrackCharacter(Character : Model)
     end)
 
     ActiveCheckpoint.Changed:Connect(function()
+        if not ActiveCheckpoint.Value then return end
         if PreviouslyUnlocked[ActiveCheckpoint.Value] then return end
         PreviouslyUnlocked[ActiveCheckpoint.Value] = true
 

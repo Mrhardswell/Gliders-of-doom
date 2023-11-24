@@ -43,8 +43,8 @@ Rewards[6] = {
 }
 
 Rewards[7] = {
-    ["ImageID"] = "rbxassetid://15316822579", -- TODO: Change to GoldenPickaxe
-    ["Type"] = "GoldenPickaxe",
+    ["ImageID"] = "rbxassetid://15316822579",
+    ["Type"] = "GoldenGlider",
     ["Amount"] = 1,
     ["RequiredTime"] = 86400,
 }
