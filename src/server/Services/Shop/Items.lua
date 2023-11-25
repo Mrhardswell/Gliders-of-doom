@@ -1,9 +1,9 @@
 local Items = {}
 
-Items["Gamepass"] = {}
 Items["Coins"] = {}
 Items["Gliders"] = {}
 Items["Spins"] = {}
+Items["Gamepass"] = {}
 
 Items["Coins"][1] = 1687766968 -- 100 Coins
 Items["Coins"][2] = 1687767053 -- 500 Coins
@@ -16,7 +16,7 @@ Items["Spins"][2] = 1687767849 -- 5 Spins
 Items["Spins"][3] = 1687767990 -- 10 Spins
 
 Items["Gamepass"][1] = 656809264 -- VIP
-Items["Gamepass"][2] = 652764638 -- Batwings
+Items["Gamepass"][2] = 652764638 -- Basic Glider
 Items["Gamepass"][3] = 655593490 -- 2x Coins
 Items["Gamepass"][4] = 647946037 -- 2x Wins
 

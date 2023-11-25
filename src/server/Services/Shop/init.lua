@@ -24,18 +24,18 @@ function ShopService.Client:CheckGamepasses(Player)
     return Gamepasses
 end
 
-function ShopService.Client:GetItemData(Type)
+function ShopService.Client:GetItemData(_, Type : string, InfoType : Enum.InfoType)
     local Items = {}
-    local ItemData = self.Server.Items[Type] or nil
+    local ItemData = self.Server.Items[Type]
     if ItemData then
         for Index, Item in ItemData do
             Items[Index] = {
-                ItemInfo = MarketPlaceService:GetProductInfo(Item.ID);
+                ItemInfo = MarketPlaceService:GetProductInfo(Item, InfoType);
                 Type = Type;
-                
             }
-            print(Items[Index])
         end
+    else
+        warn("Invalid Type")
     end
     return Items
 end

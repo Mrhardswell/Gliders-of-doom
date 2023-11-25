@@ -35,16 +35,6 @@ local Warnings = {
     }
 }
 
-local function getMass(Model)
-    local Mass = 0
-    for i, Object in Model:GetDescendants() do
-        if Object:IsA("BasePart") or Object:IsA("MeshPart") then
-            Mass += Object:GetMass()
-        end
-    end
-    return Mass
-end
-
 local function GetGlider(Character)
     for _, Accessory in Character:GetChildren() do
         if CollectionService:HasTag(Accessory, "Glider") then
@@ -65,8 +55,7 @@ local function CharacterAdded(Character)
 
         local BodyGyro = Instance.new("BodyGyro")
         BodyGyro.MaxTorque = Vector3.new(0, 0, 0)
-        BodyGyro.P = getMass(Character) * 10000
-
+        BodyGyro.P = 10000
         BodyGyro.D = 1000
         BodyGyro.Parent = humanoidRootPart
 
@@ -110,10 +99,16 @@ local function CharacterAdded(Character)
                         CameraAngle = CameraAngle / 2
                     end
 
-                    AcumulatedForce += (if CameraAngle > 0.1 then CameraAngle * 1 -(Velocity.Z)  else CameraAngle * 1 + (Velocity.Z/2))
+                    AcumulatedForce += (if CameraAngle > 0.1 then CameraAngle * 1 -(Velocity.Z)  else CameraAngle * 1 + (Velocity.Z))
 
                     if AcumulatedForce > MaxForce then
                         AcumulatedForce = MaxForce
+                    end
+
+                    local HumanoidState = Humanoid:GetState()
+
+                    if HumanoidState ~= Enum.HumanoidStateType.Freefall or HumanoidState ~= Enum.HumanoidStateType.FallingDown then
+                        AcumulatedForce = 0
                     end
 
                     if Altitude >= MaxAltitude then
@@ -142,17 +137,17 @@ local function CharacterAdded(Character)
                     Character:SetAttribute("AcumulatedForce", AcumulatedForce)
 
                 end
-            else
+            elseif Humanoid:GetState() == Enum.HumanoidStateType.Running then
                 BodyGyro.MaxTorque = Vector3.new(0, 0, 0)
                 local Root = Character:FindFirstChild("HumanoidRootPart")
                 if not Root then return end
-                Root:SetAttribute("AcumulatedForce", Root.Velocity.Z)
+                Root:SetAttribute("AcumulatedForce", 0)
             end
         end)
 
         VectorForce.Force = Vector3.new(0, 0, 0)
         VectorForce.Enabled = true
-
+    
     end
 end
 
