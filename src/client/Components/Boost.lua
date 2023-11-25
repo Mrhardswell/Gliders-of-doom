@@ -72,20 +72,14 @@ function Boost.Start(self)
 
         VectorForce.RelativeTo = Enum.ActuatorRelativeTo.World
 
-        local AccumulatedForce = Character:GetAttribute("AcumulatedForce") or 0
         local CurrentForce = VectorForce.Force
-
-        local BaseResult = CurrentMass * PushPower + AccumulatedForce + CurrentForce.Z
-
-        local TargetForce = Vector3.new(0, CurrentForce.Y + BaseResult * PushDirection.Y, -math.abs(CurrentForce.Z + BaseResult * PushDirection.Z))
-
-        VectorForce.Force = TargetForce
+        local TargetForce = Vector3.new(0, PushPower + CurrentMass * PushDirection.Y, -math.abs(CurrentForce.Z))
+        local Tween = TweenService:Create(VectorForce, TweenInfo.new(Cooldown, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Force = TargetForce})
 
         Character:SetAttribute("AcumulatedForce", TargetForce.Z)
-
         SFX.Boost:Play()
-        task.wait(Cooldown)
-
+        Tween:Play()
+        Tween.Completed:Wait()
         Root:SetAttribute("Boost", false)
 
     end)

@@ -86,12 +86,12 @@ function Tornado.Start(self)
         local CurrentMass = getMass(Hit.Parent)
         local CurrentForce = VectorForce.Force
         local TargetForce = Vector3.new(0, PushPower + CurrentMass * PushDirection.Y, -math.abs(CurrentForce.Z))
-        local Tween = TweenService:Create(VectorForce, TweenInfo.new(Cooldown, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Force = TargetForce})
+        local Tween = TweenService:Create(VectorForce, TweenInfo.new(Cooldown, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Force = TargetForce})
+        Character:SetAttribute("AcumulatedForce", TargetForce.Z)
 
         SFX.Boost:Play()
         Tween:Play()
         Tween.Completed:Wait()
-        Character:SetAttribute("AcumulatedForce", TargetForce.Z)
         Root:SetAttribute("Tornado", false)
 
     end)

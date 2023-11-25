@@ -2,6 +2,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local CollectionService = game:GetService("CollectionService")
 local StarterGui = game:GetService("StarterGui")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
 local Knit = require(ReplicatedStorage.Packages.Knit)
 
@@ -14,7 +15,7 @@ local Glider = Knit.CreateController {
 }
 
 local BaseForce = 1500
-local MaxForce = 10000
+local MaxForce = 20000
 local MaxAltitude = 1200
 local CooldownTime = 10
 local Cooldown = false
@@ -34,6 +35,16 @@ local Warnings = {
         [2] = "Ouch! You fell to your death!",
     }
 }
+
+local function getMass(Model)
+    local Mass = 0
+    for i, Object in Model:GetDescendants() do
+        if Object:IsA("BasePart") or Object:IsA("MeshPart") then
+            Mass += Object:GetMass()
+        end
+    end
+    return Mass
+end
 
 local function GetGlider(Character)
     for _, Accessory in Character:GetChildren() do
@@ -55,7 +66,8 @@ local function CharacterAdded(Character)
 
         local BodyGyro = Instance.new("BodyGyro")
         BodyGyro.MaxTorque = Vector3.new(0, 0, 0)
-        BodyGyro.P = 10000
+        BodyGyro.P = getMass(Character) * 10000
+
         BodyGyro.D = 1000
         BodyGyro.Parent = humanoidRootPart
 
@@ -76,16 +88,28 @@ local function CharacterAdded(Character)
             })
         end)
 
-        Connections["RunService"] = RunService.RenderStepped:Connect(function(deltaTime)
+        Connections["RunService"] = RunService.Heartbeat:Connect(function(deltaTime)
             if Humanoid:GetState() == (Enum.HumanoidStateType.Freefall or Enum.HumanoidStateType.FallingDown) then
                 local Root = Character:FindFirstChild("HumanoidRootPart")
                 if not Root then return end
 
                 local CameraCF = Camera.CFrame
-                BodyGyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
-                BodyGyro.CFrame = CameraCF
+                local GoalCF = CFrame.new()
 
-                if not Character:GetAttribute("Boost") or not Character:GetAttribute("Tornado") then
+                BodyGyro.MaxTorque = Vector3.new(math.huge, 1000, 1000)
+
+                if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+                    GoalCF = GoalCF * CFrame.Angles(0.15, 0, 1)
+                elseif UserInputService:IsKeyDown(Enum.KeyCode.D) then
+                    GoalCF = GoalCF * CFrame.Angles(0.15, 0, -1)
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+                    GoalCF = GoalCF * CFrame.Angles(0.2, 0, 0)
+                end
+                    
+                BodyGyro.CFrame = CameraCF * GoalCF
+
+                if not Character:GetAttribute("Boost") and not Character:GetAttribute("Tornado") then
                     VectorForce.RelativeTo = Enum.ActuatorRelativeTo.Attachment0
 
                     local Velocity = Character.HumanoidRootPart.Velocity
@@ -99,16 +123,10 @@ local function CharacterAdded(Character)
                         CameraAngle = CameraAngle / 2
                     end
 
-                    AcumulatedForce += (if CameraAngle > 0.1 then CameraAngle * 1 -(Velocity.Z)  else CameraAngle * 1 + (Velocity.Z))
+                    AcumulatedForce += (if CameraAngle > 0.2 then CameraAngle * 1 -(Velocity.Z)  else CameraAngle * 1 + (Velocity.Z*2))
 
                     if AcumulatedForce > MaxForce then
                         AcumulatedForce = MaxForce
-                    end
-
-                    local HumanoidState = Humanoid:GetState()
-
-                    if HumanoidState ~= Enum.HumanoidStateType.Freefall or HumanoidState ~= Enum.HumanoidStateType.FallingDown then
-                        AcumulatedForce = 0
                     end
 
                     if Altitude >= MaxAltitude then
@@ -134,10 +152,10 @@ local function CharacterAdded(Character)
                     local TotalForce = Force + Vector3.new(0, 0, AcumulatedForce)
 
                     VectorForce.Force = TotalForce
-                    Character:SetAttribute("AcumulatedForce", AcumulatedForce)
+                    Character:SetAttribute("AcumulatedForce", -math.abs(Root.Velocity.Z))
 
                 end
-            elseif Humanoid:GetState() == Enum.HumanoidStateType.Running then
+            else
                 BodyGyro.MaxTorque = Vector3.new(0, 0, 0)
                 local Root = Character:FindFirstChild("HumanoidRootPart")
                 if not Root then return end
@@ -147,7 +165,7 @@ local function CharacterAdded(Character)
 
         VectorForce.Force = Vector3.new(0, 0, 0)
         VectorForce.Enabled = true
-    
+
     end
 end
 

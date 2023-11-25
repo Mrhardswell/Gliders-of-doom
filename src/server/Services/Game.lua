@@ -38,6 +38,16 @@ local Game = Knit.CreateService {
 local Nodes = CollectionService:GetTagged("Node")
 local CurrentMatch = nil
 
+local function getMass(Model)
+    local Mass = 0
+    for i, Object in Model:GetDescendants() do
+        if Object:IsA("BasePart") or Object:IsA("MeshPart") then
+            Mass += Object:GetMass()
+        end
+    end
+    return Mass
+end
+
 function Game.Client:Respawn(Player)
     Player:LoadCharacter()
 end
@@ -90,6 +100,13 @@ function Game:RegisterPlayer(Player)
         Player.CharacterAdded:Connect(function(character)
             Character = character
             HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+            for _, Part in Character:GetDescendants() do
+                if Part:IsA("BasePart") or Part:IsA("MeshPart") then
+                    if CollectionService:HasTag(Part, "Mass") then continue end
+                    Part.Massless = true
+                end
+            end
+            print("Character CurrentMass: " .. getMass(Character))
         end)
 
         local PlayerIconClone = PlayerIcon:Clone()
@@ -124,13 +141,37 @@ function Game:RegisterPlayer(Player)
         local Magnitude = (StartNode.Position - EndNode.Position).Magnitude
 
         local function UpdateIcon()
-            local Distance = (StartNode.Position - HumanoidRootPart.Position).Magnitude
+            local RawDistance = StartNode.Position - HumanoidRootPart.Position
+            local Distance = RawDistance.Magnitude
+
             local Progress = 1 - (Distance / Magnitude)
-            PlayerIconClone.Position = UDim2.new(math.clamp(1 - Progress, 0 , 1), 0, 0.5, 0)
+
+            if Distance < 0 then
+                Progress = 0
+            end
+
+            PlayerIconClone.Position = UDim2.new(1 - Progress, 0, 0.5, 0)
+            local DistanceLeft = (StartNode.Position - HumanoidRootPart.Position).Magnitude
+            local _Progress = (DistanceLeft / Magnitude)
+            Character:SetAttribute("Progress", _Progress)
         end
 
         self.RegisteredPlayers[Player].Timeleft = TimeLeft.Changed:Connect(UpdateIcon)
         print("Registered Player and added to UI: " .. Player.Name)
+
+        if Player.Character.HumanoidRootPart.Position.Z < EndNode.Position.Z then
+
+            Player.Character:PivotTo(StartNode.Position + Vector3.new(0, 5, 25))
+
+            print(string.format("Player Crossed the Finish Line: %s", Player.Name))
+            local leaderstats = Player:FindFirstChild("leaderstats")
+            local Wins = leaderstats:FindFirstChild("Wins")
+            if not Wins then return end
+            local CurrentWins = DataTypeHandler:StringToNumber(Wins.Value)
+            Wins.Value = DataTypeHandler:NumberToString(CurrentWins + 1)
+        end
+
+
 
     end
 
