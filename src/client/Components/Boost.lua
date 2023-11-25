@@ -28,7 +28,7 @@ local function getMass(Model)
     return Mass
 end
 
-local Cooldown = 1
+local Cooldown = 3
 
 function Boost.Start(self)
     repeat task.wait() until Knit.FullyStarted
@@ -43,6 +43,7 @@ function Boost.Start(self)
         
         if not Root then return end
         if not Humanoid then return end
+
 
         local Character = Hit.Parent
         local Glider = GliderController.GetGlider(Character)
@@ -70,16 +71,20 @@ function Boost.Start(self)
         local PushDirection = self.Pad:GetAttribute("PushDirection")
         local CurrentMass = getMass(Hit.Parent)
 
+        if Root:GetAttribute("Boost") then
+            PushPower = PushPower * 2
+        end
+
         VectorForce.RelativeTo = Enum.ActuatorRelativeTo.World
 
         local CurrentForce = VectorForce.Force
-        local TargetForce = Vector3.new(0, PushPower + CurrentMass * PushDirection.Y, -math.abs(CurrentForce.Z))
-        local Tween = TweenService:Create(VectorForce, TweenInfo.new(Cooldown, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Force = TargetForce})
+        local TargetForce = Vector3.new(0, PushPower + CurrentMass * PushDirection.Y, -math.abs(PushPower + CurrentMass * PushDirection.Z))
+        local Tween = TweenService:Create(VectorForce, TweenInfo.new(1, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Force = TargetForce + CurrentForce})
 
         Character:SetAttribute("AcumulatedForce", TargetForce.Z)
         SFX.Boost:Play()
         Tween:Play()
-        Tween.Completed:Wait()
+        task.wait(Cooldown)
         Root:SetAttribute("Boost", false)
 
     end)

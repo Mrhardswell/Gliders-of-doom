@@ -1,7 +1,12 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local MarketPlaceService = game:GetService("MarketplaceService")
 
+local DataTypeHandler = require(ReplicatedStorage.Shared.Modules.DataTypeHandler)
+
 local Knit = require(ReplicatedStorage.Packages.Knit)
+local Net = require(ReplicatedStorage.Packages.Net)
+
+local GameMessage = Net:RemoteEvent("GameMessage")
 
 local ShopService = Knit.CreateService {
     Name = "ShopService";
@@ -39,5 +44,49 @@ function ShopService.Client:GetItemData(_, Type : string, InfoType : Enum.InfoTy
     end
     return Items
 end
+
+MarketPlaceService.PromptGamePassPurchaseFinished:Connect(function(Player, ID, Purchased)
+    if Purchased then
+        print("Purchased Gamepass", ID)
+    else
+        print("Failed to purchase gamepass", ID)
+    end
+end)
+
+MarketPlaceService.PromptPurchaseFinished:Connect(function(Player, ID, Purchased)
+    if Purchased then
+        print("Purchased Item", ID)
+    else
+        print("Failed to purchase item", ID)
+    end
+end)
+
+MarketPlaceService.PromptProductPurchaseFinished:Connect(function(PlayerID, ID, Purchased)
+    if Purchased then
+        print("Purchased Product", ID)
+        local ProductInfo = MarketPlaceService:GetProductInfo(ID, Enum.InfoType.Product)
+        print("Product Info", ProductInfo)
+        local Player = game.Players:GetPlayerByUserId(PlayerID)
+        local leaderstats = Player:WaitForChild("leaderstats")
+        local Coins = leaderstats:WaitForChild("Coins")
+        local Name = ProductInfo.Name
+        local Amount = tonumber(string.match(Name, "%d+"))
+        local CurrentCoins = DataTypeHandler:StringToNumber(Coins.Value)
+        Coins.Value = DataTypeHandler:NumberToString(CurrentCoins + Amount)
+
+        local Message = {{
+            Title = "Purchased Product";
+            Text = "You have purchased " .. ProductInfo.Name;
+            Duration = 5;
+        }}
+
+        GameMessage:FireClient(Player, Message)
+
+        print("Purchased Product", ID)
+
+    else
+        print("Failed to purchase product", ID)
+    end
+end)
 
 return ShopService

@@ -63,4 +63,14 @@ Net:Connect("BlockMessage", function(Message)
     end
 end)
 
+Net:Connect("GameMessage", function(Message)
+    print("GameMessage", Message)
+    StarterGui:SetCore("SendNotification", {
+        Title = Message.Title;
+        Text = Message.Text;
+        Duration = Message.Duration;
+    })
+
+end)
+
 return Messages

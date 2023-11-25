@@ -1,8 +1,8 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local CollectionService = game:GetService("CollectionService")
+local UserInputService = game:GetService("UserInputService")
 local StarterGui = game:GetService("StarterGui")
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
 
 local Knit = require(ReplicatedStorage.Packages.Knit)
 
@@ -15,11 +15,11 @@ local Glider = Knit.CreateController {
 }
 
 local BaseForce = 1500
-local MaxForce = 20000
+local MaxForce = 50000
 local MaxAltitude = 1200
 local CooldownTime = 10
-local Cooldown = false
 
+local Cooldown = false
 local Connections = {}
 
 local Warnings = {
@@ -96,12 +96,12 @@ local function CharacterAdded(Character)
                 local CameraCF = Camera.CFrame
                 local GoalCF = CFrame.new()
 
-                BodyGyro.MaxTorque = Vector3.new(math.huge, 1000, 1000)
+                BodyGyro.MaxTorque = Vector3.new(math.huge, 30000, 30000)
 
                 if UserInputService:IsKeyDown(Enum.KeyCode.A) then
-                    GoalCF = GoalCF * CFrame.Angles(0.15, 0, 1)
+                    GoalCF = GoalCF * CFrame.Angles(0.3, 0, 0.5)
                 elseif UserInputService:IsKeyDown(Enum.KeyCode.D) then
-                    GoalCF = GoalCF * CFrame.Angles(0.15, 0, -1)
+                    GoalCF = GoalCF * CFrame.Angles(0.3, 0, -0.5)
                 end
                 if UserInputService:IsKeyDown(Enum.KeyCode.W) then
                     GoalCF = GoalCF * CFrame.Angles(0.2, 0, 0)
@@ -123,7 +123,17 @@ local function CharacterAdded(Character)
                         CameraAngle = CameraAngle / 2
                     end
 
-                    AcumulatedForce += (if CameraAngle > 0.2 then CameraAngle * 1 -(Velocity.Z)  else CameraAngle * 1 + (Velocity.Z*2))
+                    local Total = AcumulatedForce + (BaseForce * CameraAngle)
+
+                    local function Lerp(num, goal, i)
+                        return num + (goal-num)*i
+                    end
+
+                    if CameraAngle < 0 then
+                        AcumulatedForce = -math.abs(Lerp(AcumulatedForce, Total, deltaTime * 3))
+                    else
+                        AcumulatedForce = -math.abs(-Lerp(AcumulatedForce, Total, deltaTime * 2))
+                    end
 
                     if AcumulatedForce > MaxForce then
                         AcumulatedForce = MaxForce
@@ -148,17 +158,17 @@ local function CharacterAdded(Character)
 
                     end
 
-                    local Force = Vector3.new(0, 0, BaseForce * CameraAngle)
-                    local TotalForce = Force + Vector3.new(0, 0, AcumulatedForce)
-
+                    local Force = Vector3.new(0, 0, -math.abs(Velocity.Z + AcumulatedForce))
+                    local TotalForce = Force + Vector3.new(0, 0, -math.abs(Root.Velocity.Z))
                     VectorForce.Force = TotalForce
-                    Character:SetAttribute("AcumulatedForce", -math.abs(Root.Velocity.Z))
+                    Character:SetAttribute("AcumulatedForce", AcumulatedForce)
 
                 end
             else
                 BodyGyro.MaxTorque = Vector3.new(0, 0, 0)
                 local Root = Character:FindFirstChild("HumanoidRootPart")
                 if not Root then return end
+                VectorForce.Force = Root.Velocity / 2
                 Root:SetAttribute("AcumulatedForce", 0)
             end
         end)

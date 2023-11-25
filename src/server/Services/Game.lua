@@ -1,5 +1,6 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local CollectionService = game:GetService("CollectionService")
+local PhysicsService = game:GetService("PhysicsService")
 
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
@@ -29,6 +30,9 @@ local TimeLeft = Instance.new("NumberValue",ReplicatedStorage)
 TimeLeft.Name = "TimeLeft"
 TimeLeft.Value = MatchTime
 
+PhysicsService:RegisterCollisionGroup("Participants")
+PhysicsService:CollisionGroupSetCollidable("Participants", "Participants", false)
+
 local Game = Knit.CreateService {
     Name = "GameService" ,
     Client = {},
@@ -46,6 +50,15 @@ local function getMass(Model)
         end
     end
     return Mass
+end
+
+local function disableCollisions(character)
+    for _, bodyPart in character:GetDescendants() do
+        if bodyPart:IsA("BasePart") or bodyPart:IsA("MeshPart") then
+            bodyPart.CollisionGroup = "Participants"
+        end
+    end
+    print("Disabled Collisions Between Participants")
 end
 
 function Game.Client:Respawn(Player)
@@ -66,6 +79,7 @@ function Game.Client:CheckpointReached(Player)
 end
 
 function Game:StartTimer()
+    print("Starting Timer")
     if CurrentMatch then CurrentMatch:Disconnect() end
     self.GameState.Value = "In Progress"
 
@@ -78,16 +92,15 @@ function Game:StartTimer()
             else
                 self:EndMatch()
                 TimeLeft.Value = MatchTime
-                CurrentMatch:Disconnect()
             end
         end
     end)
-
 end
 
 function Game:EndMatch()
     self.GameState.Value = "Ended"
     Reset:FireAllClients()
+    print("Match Ended")
     self:StartTimer()
 end
 
@@ -100,15 +113,11 @@ function Game:RegisterPlayer(Player)
         Player.CharacterAdded:Connect(function(character)
             Character = character
             HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
-            for _, Part in Character:GetDescendants() do
-                if Part:IsA("BasePart") or Part:IsA("MeshPart") then
-                    if CollectionService:HasTag(Part, "Mass") then continue end
-                    Part.Massless = true
-                end
-            end
-            print("Character CurrentMass: " .. getMass(Character))
+            disableCollisions(Character)
         end)
 
+        disableCollisions(Character)
+        
         local PlayerIconClone = PlayerIcon:Clone()
         PlayerIconClone.Parent = ProgressBar
         PlayerIconClone.Name = Player.Name
@@ -157,21 +166,18 @@ function Game:RegisterPlayer(Player)
         end
 
         self.RegisteredPlayers[Player].Timeleft = TimeLeft.Changed:Connect(UpdateIcon)
-        print("Registered Player and added to UI: " .. Player.Name)
 
         if Player.Character.HumanoidRootPart.Position.Z < EndNode.Position.Z then
-
-            Player.Character:PivotTo(StartNode.Position + Vector3.new(0, 5, 25))
-
             print(string.format("Player Crossed the Finish Line: %s", Player.Name))
+
+            Player.Character:PivotTo(workspace.SpawnLocation.CFrame + Vector3.new(0, 5, 0))
+
             local leaderstats = Player:FindFirstChild("leaderstats")
             local Wins = leaderstats:FindFirstChild("Wins")
             if not Wins then return end
             local CurrentWins = DataTypeHandler:StringToNumber(Wins.Value)
             Wins.Value = DataTypeHandler:NumberToString(CurrentWins + 1)
         end
-
-
 
     end
 
