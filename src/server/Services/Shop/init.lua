@@ -1,5 +1,6 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local MarketPlaceService = game:GetService("MarketplaceService")
+local CollectionService = game:GetService("CollectionService")
 
 local DataTypeHandler = require(ReplicatedStorage.Shared.Modules.DataTypeHandler)
 
@@ -78,6 +79,27 @@ function ShopService.Client:BuyGlider(Player, ID)
         return GliderData
     else
         return false
+    end
+end
+
+function ShopService:EquipGlider(Player, GliderId)
+    local GliderData = self.Server.DataService:GetGliderData(Player)
+    if GliderData[GliderId] then
+        local Character = Player.Character
+        local Humanoid = Character:FindFirstChildOfClass("Humanoid")
+        if Humanoid then
+            local Glider = ReplicatedStorage.Assets.Gliders[GliderId]:Clone()
+            local CurrentGlider
+            for _, Child in Character:GetChildren() do
+                if CollectionService:HasTag(Child, "Glider") then
+                    CurrentGlider = Child
+                end
+            end
+            if CurrentGlider then
+                CurrentGlider:Destroy()
+            end
+            Humanoid:AddAccessory(Glider)
+        end
     end
 end
 

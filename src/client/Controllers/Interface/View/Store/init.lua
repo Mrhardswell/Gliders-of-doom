@@ -102,7 +102,8 @@ function Store.new(ScreenGui, Interface)
                     local Glider = ReplicatedStorage.Assets.Gliders:FindFirstChild(GliderId)
 
                     if not Glider then
-                        error(string.format("Glider %s not found", GliderId))
+                        print("Glider Not Found", GliderId)
+                        continue
                     else
                         print("Glider Found", GliderId)
                     end

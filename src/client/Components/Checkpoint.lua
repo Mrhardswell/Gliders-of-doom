@@ -68,7 +68,7 @@ local function TrackCharacter(Character : Model)
 
     Humanoid.Died:Connect(function()
         if Connection then Connection:Disconnect() end
-        GameService:Respawn():andThen(function()
+        GameService:Respawn(ActiveCheckpoint.Value):andThen(function()
             local Character = Player.Character or Player.CharacterAdded:Wait()
             if not ActiveCheckpoint.Value then return
             elseif ActiveCheckpoint.Value == nil then return end

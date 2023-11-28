@@ -60,8 +60,11 @@ local function disableCollisions(character)
     end
 end
 
-function Game.Client:Respawn(Player)
+function Game.Client:Respawn(Player, ActiveCheckpoint)
     Player:LoadCharacter()
+    local Character = Player.Character or Player.CharacterAdded:Wait()
+    if not ActiveCheckpoint then return end
+    Character:PivotTo(CFrame.new(ActiveCheckpoint:GetPivot().Position + Vector3.new(0,5,0)))
 end
 
 function Game.Client:CheckpointReached(Player)
