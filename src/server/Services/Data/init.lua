@@ -299,7 +299,7 @@ function DataService.Client:RequestSet(Player, Key: string, Value)
 	end
 end
 
-function DataService.Client:GetGliderData(Player)
+function DataService:GetGliderData(Player)
 	local PlayerData = GetData(Player)
 	repeat task.wait() until PlayerData
 	local GliderData = PlayerData.Data["Gliders"]

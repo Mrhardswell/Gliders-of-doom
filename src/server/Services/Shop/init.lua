@@ -66,13 +66,13 @@ function ShopService:AwardCoins(Player, Amount)
 end
 
 function ShopService.Client:BuyGlider(Player, ID)
-    local ItemInfo = MarketPlaceService:GetProductInfo(ID, Enum.InfoType.Product)
+    local ItemInfo = self.Server.Items["Gliders"][1][ID]
     local leaderstats = Player:WaitForChild("leaderstats")
     local Coins = leaderstats:WaitForChild("Coins")
     local NumeralCoins = DataTypeHandler:StringToNumber(Coins.Value)
     local Cost = ItemInfo.Price
 
-    if Coins >= Cost then
+    if NumeralCoins >= Cost then
         Coins.Value = DataTypeHandler:NumberToString(NumeralCoins - Cost)
         local GliderData = self.Server.DataService:GetGliderData(Player)
         GliderData[ID] = true

@@ -22,7 +22,7 @@ Items["Gamepass"][4] = 647946037 -- 2x Wins
 
 Items["Gliders"][1] = {
 
-    Basic = {
+    ["Basic Glider"] = {
         Name = "Basic Glider";
         Price = 0;
         Image = "rbxassetid://0";
@@ -30,7 +30,7 @@ Items["Gliders"][1] = {
         Owned = true;
     };
 
-    Parrot = {
+    ["Parrot Glider"] = {
         Name = "Parrot Glider";
         Price = 1450;
         Image = "rbxassetid://0";
@@ -38,7 +38,7 @@ Items["Gliders"][1] = {
         Owned = false;
     };
 
-    RedWhite = {
+    ["Red and White Glider"] = {
         Name = "Red and White Glider";
         Price = 2500;
         Image = "rbxassetid://0";
@@ -46,7 +46,7 @@ Items["Gliders"][1] = {
         Owned = false;
     };
 
-    GreenWhite = {
+    ["Green and White Glider"] = {
         Name = "Green and White Glider";
         Price = 2500;
         Image = "rbxassetid://0";
@@ -54,7 +54,7 @@ Items["Gliders"][1] = {
         Owned = false;
     };
 
-    YellowWhite = {
+    ["Yellow and White Glider"] = {
         Name = "Yellow and White Glider";
         Price = 2500;
         Image = "rbxassetid://0";
@@ -62,7 +62,7 @@ Items["Gliders"][1] = {
         Owned = false;
     };
 
-    PaperPlane = {
+    ["Paper Plane Glider"] = {
         Name = "Paper Plane Glider";
         Price = 5000;
         Image = "rbxassetid://0";
@@ -70,7 +70,7 @@ Items["Gliders"][1] = {
         Owned = false;
     };
 
-    DragonFly = {
+    ["Dragon Fly Glider"] = {
         Name = "Dragon Fly Glider";
         Price = 6500;
         Image = "rbxassetid://0";
@@ -78,7 +78,7 @@ Items["Gliders"][1] = {
         Owned = false;
     };
 
-    PlaneEngine = {
+    ["Plane Engine Glider"] = {
         Name = "Plane Engine Glider";
         Price = 8500;
         Image = "rbxassetid://0";
@@ -86,7 +86,7 @@ Items["Gliders"][1] = {
         Owned = false;
     };
 
-    Helicopter = {
+    ["Helicopter Glider"] = {
         Name = "Helicopter Glider";
         Price = 10000;
         Image = "rbxassetid://0";
@@ -94,7 +94,7 @@ Items["Gliders"][1] = {
         Owned = false;
     };
 
-    Jet = {
+    ["Jet Glider"] = {
         Name = "Jet Glider";
         Price = 26000;
         Image = "rbxassetid://0";
@@ -102,7 +102,7 @@ Items["Gliders"][1] = {
         Owned = false;
     };
 
-    Rocket = {
+    ["Rocket Glider"] = {
         Name = "Rocket Glider";
         Price = 50000;
         Image = "rbxassetid://0";

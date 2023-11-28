@@ -72,6 +72,7 @@ local function calculateMaintainYForce(character)
 end
 
 local function GetGlider(Character)
+    repeat task.wait() until Character:FindFirstChild("HumanoidRootPart")
     for _, Accessory in Character:GetChildren() do
         if CollectionService:HasTag(Accessory, "Glider") then
             return Accessory
@@ -107,8 +108,9 @@ local function CharacterAdded(Character)
             end
 
             local _Glider = GetGlider(Character)
-            local Boost = _Glider:FindFirstChild("Boost", true)
-            local VectorForce = Boost:FindFirstChild("VectorForce")
+            print(_Glider)
+            local Boost = _Glider:WaitForChild("Handle"):WaitForChild("Boost")
+            local VectorForce = Boost:WaitForChild("VectorForce")
 
             Connections["Death"] = Humanoid.Died:Connect(function()
                 StarterGui:SetCore("SendNotification", {
