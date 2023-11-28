@@ -106,7 +106,6 @@ local function PlayerAdded(player : Player)
 
 		if table.find(Players, player) then
 			DataCache[player] = profile
-			print("Loaded Profile for", player.Name, "Data Loaded", profile.Data)
 			CreateValues(profile.Data, player)
 			player:SetAttribute("Ready", true)
 			UpdateClient:FireClient(player, DataCache[player].Data)
@@ -298,6 +297,13 @@ function DataService.Client:RequestSet(Player, Key: string, Value)
 	else
 		return {Success = false, Message = "Access Denied"}
 	end
+end
+
+function DataService.Client:GetGliderData(Player)
+	local PlayerData = GetData(Player)
+	repeat task.wait() until PlayerData
+	local GliderData = PlayerData.Data["Gliders"]
+	return GliderData
 end
 
 local Current = 0

@@ -51,11 +51,7 @@ function Gifts.new(ScreenGui, Interface)
 
     self.RewardService:GetData():andThen(function(Data)
         self.PlayerData = Data
-        print("Got player data", Data)
-    end)
-
-    repeat task.wait()
-    until self.PlayerData
+    end):await()
 
     self.ExitOriginalSize = self.Exit.Size
 

@@ -13,9 +13,8 @@ DataStructure = {
     VipRewardsLastClaimed = {},
     GroupRewardsLastClaimed = {},
 
-    Inventory = {
-        Starter = true,
-    },
+    Gliders = { "Basic Glider" },
+    EquippedGlider = "Basic Glider",
 
     Settings = {
         Music = true,

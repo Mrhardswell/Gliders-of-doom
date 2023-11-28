@@ -2301,9 +2301,7 @@ if IsStudio == true then
 
 			UseMockDataStore = true
 			ProfileService._use_mock_data_store = true
-			print("[ProfileService]: Roblox API services unavailable - data will not be saved")
-		else
-			print("[ProfileService]: Roblox API services available - data will be saved")
+			warn("[ProfileService]: Roblox API services unavailable - data will not be saved")
 		end
 		IsLiveCheckActive = false
 	end)

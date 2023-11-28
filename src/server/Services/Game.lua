@@ -58,7 +58,6 @@ local function disableCollisions(character)
             bodyPart.CollisionGroup = "Participants"
         end
     end
-    print("Disabled Collisions Between Participants")
 end
 
 function Game.Client:Respawn(Player)
@@ -79,7 +78,6 @@ function Game.Client:CheckpointReached(Player)
 end
 
 function Game:StartTimer()
-    print("Starting Timer")
     if CurrentMatch then CurrentMatch:Disconnect() end
     self.GameState.Value = "In Progress"
 

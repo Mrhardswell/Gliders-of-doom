@@ -15,6 +15,7 @@ local ShopService = Knit.CreateService {
 
 function ShopService:KnitStart()
     self.Items = require(script.Items)
+    self.DataService = Knit.GetService("DataService")
 end
 
 function ShopService.Client:CheckGamepasses(Player)
@@ -29,9 +30,10 @@ function ShopService.Client:CheckGamepasses(Player)
     return Gamepasses
 end
 
-function ShopService.Client:GetItemData(_, Type : string, InfoType : Enum.InfoType)
+function ShopService.Client:GetItemData(Player, Type : string, InfoType : Enum.InfoType)
     local Items = {}
     local ItemData = self.Server.Items[Type]
+
     if ItemData then
         for Index, Item in ItemData do
             if type(Item) == "table" then
@@ -62,6 +64,23 @@ function ShopService:AwardCoins(Player, Amount)
     Coins.Value = DataTypeHandler:NumberToString(CurrentCoins + Amount)
 end
 
+function ShopService.Client:BuyGlider(Player, ID)
+    local ItemInfo = MarketPlaceService:GetProductInfo(ID, Enum.InfoType.Product)
+    local leaderstats = Player:WaitForChild("leaderstats")
+    local Coins = leaderstats:WaitForChild("Coins")
+    local NumeralCoins = DataTypeHandler:StringToNumber(Coins.Value)
+    local Cost = ItemInfo.Price
+
+    if Coins >= Cost then
+        Coins.Value = DataTypeHandler:NumberToString(NumeralCoins - Cost)
+        local GliderData = self.Server.DataService:GetGliderData(Player)
+        GliderData[ID] = true
+        return GliderData
+    else
+        return false
+    end
+end
+
 MarketPlaceService.PromptGamePassPurchaseFinished:Connect(function(Player, ID, Purchased)
     if Purchased then
         print("Purchased Gamepass", ID)
@@ -80,29 +99,38 @@ end)
 
 MarketPlaceService.PromptProductPurchaseFinished:Connect(function(PlayerID, ID, Purchased)
     if Purchased then
-        print("Purchased Product", ID)
-        local ProductInfo = MarketPlaceService:GetProductInfo(ID, Enum.InfoType.Product)
-        print("Product Info", ProductInfo)
-        local Player = game.Players:GetPlayerByUserId(PlayerID)
-        local leaderstats = Player:WaitForChild("leaderstats")
-        local Coins = leaderstats:WaitForChild("Coins")
-        local Name = ProductInfo.Name
-        local Amount = tonumber(string.match(Name, "%d+"))
-        local CurrentCoins = DataTypeHandler:StringToNumber(Coins.Value)
-        Coins.Value = DataTypeHandler:NumberToString(CurrentCoins + Amount)
+        local IDinList = false
+        for _, Item in ShopService.Items["Coins"] do
+            if Item == ID then
+                IDinList = true
+            end
+        end
 
-        local Message = {{
+        local ProductInfo = MarketPlaceService:GetProductInfo(ID, Enum.InfoType.Product)
+        local Player = game.Players:GetPlayerByUserId(PlayerID)
+
+        local Name = ProductInfo.Name
+
+        local isCoin = string.match(Name, "Coins")
+        local Amount = tonumber(string.match(Name, "%d+"))
+
+        if IDinList and isCoin then
+            local leaderstats = Player:WaitForChild("leaderstats")
+            local Coins = leaderstats:WaitForChild("Coins")
+            local CurrentCoins = DataTypeHandler:StringToNumber(Coins.Value)
+            Coins.Value = DataTypeHandler:NumberToString(CurrentCoins + Amount)
+        end
+
+        local Message = {
             Title = "Purchased Product";
             Text = "You have purchased " .. ProductInfo.Name;
             Duration = 5;
-        }}
+        }
 
         GameMessage:FireClient(Player, Message)
-
-        print("Purchased Product", ID)
-
+        print("Product Info", ProductInfo)
     else
-        print("Failed to purchase product", ID)
+        warn("Failed to purchase product", ID)
     end
 end)
 
