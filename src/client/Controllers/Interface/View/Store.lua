@@ -9,7 +9,7 @@ local UISounds = SoundService.UI
 
 local Knit = require(ReplicatedStorage.Packages.Knit)
 
-local StartingPage = "Featured"
+local StartingPage = "Coins"
 
 local Store = {}
 
@@ -19,10 +19,13 @@ local TweenInfos = {
     Pressed = TweenInfo.new(.1, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
 }
 
+local RegistedProducts = {}
+
 function Store.new(ScreenGui, Interface)
     local self = {}
 
     self.ShopService = Knit.GetService("ShopService")
+
 
     self.ScreenGui = ScreenGui
     self.Main = ScreenGui.Main
@@ -89,6 +92,23 @@ function Store.new(ScreenGui, Interface)
                 local ItemTemplate = Data.Template:Clone()
                 ItemTemplate.LayoutOrder = Index
 
+                if _Data.Type == "Gliders" then
+                    local GliderId = _Data.ItemInfo.Name
+                    if GliderId == nil then print("GliderId is nil", _Data) end
+                    local Glider = ReplicatedStorage.Assets.Gliders:FindFirstChild(GliderId)
+
+                    if not Glider then
+                        warn("Invalid Glider", GliderId)
+                        continue
+                    end
+
+                    ItemTemplate.Label.Text = GliderId
+                    ItemTemplate.Name = GliderId
+
+                    ItemTemplate.Parent = self.Items[Button.Name]
+                    continue
+                end
+
                 local TargetType = if _Data.ItemInfo ~= nil then _Data.ItemInfo else _Data.GamepassInfo
 
                 local DisplayName = TargetType.Name
@@ -106,11 +126,23 @@ function Store.new(ScreenGui, Interface)
 
                 local BuyButton = ItemTemplate.Buy
                 local ProductId = TargetType.ProductId
+                local Owned
 
                 BuyButton:SetAttribute("ProductId", ProductId)
 
+                RegistedProducts[ProductId] = BuyButton
+
+                if Button.Name == "Featured" then
+                    Owned = MarketPlaceService:UserOwnsGamePassAsync(Player.UserId, ProductId)
+                    if Owned then
+                    ItemTemplate.Buy.Main.Label.Text = "Owned"
+                    end
+                end
+                
                 BuyButton.MouseButton1Click:Connect(function()
                     UISounds.Click:Play()
+
+                    if Owned then return end
                     print("Prompting Purchase", ItemTemplate.Name, ProductId)
 
                     if Button.Name == "Featured" then
@@ -164,7 +196,7 @@ function Store.new(ScreenGui, Interface)
                 JumpTo(Data.Button.Name)
             end)
 
-            self.UIPageLayout:JumpTo(self.FeaturedPage)
+            self.UIPageLayout:JumpTo(self.CoinPage)
 
             JumpTo(StartingPage)
 
@@ -227,6 +259,12 @@ end)
 MarketPlaceService.PromptGamePassPurchaseFinished:Connect(function(Player, ProductId, PurchaseSuccess)
     if PurchaseSuccess then
         print("Gamepass Purchase Success", ProductId)
+        print(RegistedProducts)
+        local isProduct = RegistedProducts[ProductId]
+        if isProduct then
+            print("Product is now owned", ProductId)
+            RegistedProducts[ProductId].Main.Label.Text = "Owned"
+        end
     else
         print("Gamepass Purchase Failed", ProductId)
     end

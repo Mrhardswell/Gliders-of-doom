@@ -21,7 +21,7 @@ local DataTypeHandler = require(ReplicatedStorage.Shared.Modules.DataTypeHandler
 local GameUpdate = Net:RemoteEvent("GameUpdate")
 local Reset = Net:RemoteEvent("Reset")
 
-local MatchTime = 360
+local MatchTime = 480
 local Current = 0
 local Interval = 1
 local RewardAmount = 10

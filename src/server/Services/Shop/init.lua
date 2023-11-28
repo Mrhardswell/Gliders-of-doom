@@ -34,15 +34,32 @@ function ShopService.Client:GetItemData(_, Type : string, InfoType : Enum.InfoTy
     local ItemData = self.Server.Items[Type]
     if ItemData then
         for Index, Item in ItemData do
-            Items[Index] = {
-                ItemInfo = MarketPlaceService:GetProductInfo(Item, InfoType);
-                Type = Type;
-            }
+            if type(Item) == "table" then
+                for _, Data in Item do
+                    Items[Index] = {
+                        ItemInfo = Data;
+                        Type = Type;
+                    }
+                end
+            else
+                Items[Index] = {
+                    ItemInfo = MarketPlaceService:GetProductInfo(Item, InfoType);
+                    Type = Type;
+                }
+            end
         end
+        return Items
     else
         warn("Invalid Type")
     end
     return Items
+end
+
+function ShopService:AwardCoins(Player, Amount)
+    local leaderstats = Player:WaitForChild("leaderstats")
+    local Coins = leaderstats:WaitForChild("Coins")
+    local CurrentCoins = DataTypeHandler:StringToNumber(Coins.Value)
+    Coins.Value = DataTypeHandler:NumberToString(CurrentCoins + Amount)
 end
 
 MarketPlaceService.PromptGamePassPurchaseFinished:Connect(function(Player, ID, Purchased)

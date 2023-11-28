@@ -20,4 +20,14 @@ Items["Gamepass"][2] = 652764638 -- Basic Glider
 Items["Gamepass"][3] = 655593490 -- 2x Coins
 Items["Gamepass"][4] = 647946037 -- 2x Wins
 
+Items["Gliders"][1] = {
+    Basic = {
+        Name = "Basic Glider";
+        Price = 0;
+        Image = "rbxassetid://0";
+        Description = "A basic glider";
+    };
+
+}
+
 return Items
