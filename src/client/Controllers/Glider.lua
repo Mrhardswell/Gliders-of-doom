@@ -9,6 +9,8 @@ local Knit = require(ReplicatedStorage.Packages.Knit)
 local Player = game.Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
+local ShopService
+
 local Glider = Knit.CreateController {
     Name = "GliderController";
     Client = {};
@@ -71,13 +73,10 @@ local function calculateMaintainYForce(character)
     end
 end
 
+
 local function GetGlider(Character)
-    repeat task.wait() until Character:FindFirstChild("HumanoidRootPart")
-    for _, Accessory in Character:GetChildren() do
-        if CollectionService:HasTag(Accessory, "Glider") then
-            return Accessory
-        end
-    end
+    repeat task.wait() until Character:FindFirstChild("Humanoid")
+    return ShopService:EquipLastGlider(Character)
 end
 
 local function GetRandomWarning(Type)
@@ -85,10 +84,21 @@ local function GetRandomWarning(Type)
     return Warnings[Type][Random]
 end
 
+local CurrentConnection = nil
+
+local function Cleanup()
+    if CurrentConnection then
+        CurrentConnection:Disconnect()
+        CurrentConnection = nil
+    end
+end
+
 local function CharacterAdded(Character)
     local Humanoid = Character:WaitForChild("Humanoid")
     local humanoidRootPart = Character:WaitForChild("HumanoidRootPart")
     if humanoidRootPart then
+        local LastGlider = nil
+        local CurrentGlider = nil
 
         local BodyGyro = Instance.new("BodyGyro")
         BodyGyro.MaxTorque = Vector3.new(0, 0, 0)
@@ -107,8 +117,27 @@ local function CharacterAdded(Character)
                 Connections[Name] = nil
             end
 
-            local _Glider = GetGlider(Character)
-            print(_Glider)
+            local _Glider
+
+            if LastGlider then
+                for _, Child in Character:GetChildren() do
+                    if CollectionService:HasTag(Child, "Glider") then
+                        if Child == LastGlider then
+                            _Glider = Child
+                        end
+                    end
+                end
+            end
+
+            if not _Glider then
+                ShopService:EquipLastGlider(Character):andThen(function(data)
+                    _Glider = data
+
+                end):await()
+            end
+
+            LastGlider = _Glider
+
             local Boost = _Glider:WaitForChild("Handle"):WaitForChild("Boost")
             local VectorForce = Boost:WaitForChild("VectorForce")
 
@@ -130,19 +159,19 @@ local function CharacterAdded(Character)
 
                     BodyGyro.MaxTorque = Vector3.new(math.huge, 5000, 5000)
 
-                    thrustMagnitude = math.clamp(Root.Velocity.Magnitude, 0, 500)
+                    thrustMagnitude = Root.Velocity.Magnitude * 1.5
 
                     if UserInputService:IsKeyDown(Enum.KeyCode.A) then
                         GoalCF = GoalCF * CFrame.Angles(0, math.rad(40), math.rad(30))
-                        BodyThrust.Force = -Root.CFrame.RightVector * thrustMagnitude
+                        BodyThrust.Force = -Root.CFrame.RightVector * thrustMagnitude * 3
                     elseif UserInputService:IsKeyDown(Enum.KeyCode.D) then
                         GoalCF = GoalCF * CFrame.Angles(0, math.rad(-40), math.rad(-30))
-                        BodyThrust.Force = Root.CFrame.RightVector * thrustMagnitude
+                        BodyThrust.Force = Root.CFrame.RightVector * thrustMagnitude * 3
                     end
 
                     if UserInputService:IsKeyDown(Enum.KeyCode.S) or UserInputService:IsKeyDown(Enum.KeyCode.Space) then
                         GoalCF = GoalCF * CFrame.Angles(math.rad(60), 0, 0)
-                        BodyThrust.Force = (Root.CFrame.UpVector + Root.CFrame.LookVector) * thrustMagnitude
+                        BodyThrust.Force = (Root.CFrame.UpVector + Root.CFrame.LookVector) * thrustMagnitude * 2
                     end
 
                     if UserInputService:IsKeyDown(Enum.KeyCode.W) then
@@ -219,7 +248,12 @@ local function CharacterAdded(Character)
                             TotalForce = TotalForce.Unit * MAX_FORCE + Vector3.new(0, maintainYForce, BaseThrottle)
                         end
 
-                        VectorForce.Force = TotalForce
+                        if TotalForce.Magnitude < 200 then
+                            VectorForce.Force = TotalForce
+                        else
+                            VectorForce.Force = TotalForce * 0.75
+                        end
+
                         Character:SetAttribute("AcumulatedForce", AcumulatedForce)
 
                     end
@@ -238,23 +272,32 @@ local function CharacterAdded(Character)
 
         end
 
-        Equipped()
+        if CurrentConnection then
+            Cleanup()
+        end
+
+
+        CurrentConnection = Equipped()
 
         Character.ChildAdded:Connect(function(Child)
-            if CollectionService:HasTag(Child, "Glider") then
-                Equipped()
+            if Child == LastGlider then return end
+            if Child:IsA("Accessory") and CollectionService:HasTag(Child, "Glider") then
+                if CurrentConnection then
+                    Cleanup()
+                end
+                CurrentConnection = Equipped()
             end
         end)
 
     end
 end
 
-if Player.Character then
-    CharacterAdded(Player.Character or Player.CharacterAdded:Wait())
+
+function Glider:KnitStart()
+    ShopService = Knit.GetService("ShopService")
+    task.spawn(CharacterAdded,Player.Character or Player.CharacterAdded:Wait())
+    Player.CharacterAdded:Connect(CharacterAdded)
+    Glider.GetGlider = GetGlider
 end
-
-Player.CharacterAdded:Connect(CharacterAdded)
-
-Glider.GetGlider = GetGlider
 
 return Glider

@@ -19,7 +19,7 @@ local DataService = Knit.CreateService {
 	DataCache = DataCache;
 }
 
-local DataStore = ProfileService.GetProfileStore("Test1", DataStructure)
+local DataStore = ProfileService.GetProfileStore("Test2", DataStructure)
 
 function DataService.Client:GetInitialData(Player)
 	repeat task.wait() until DataCache[Player]
@@ -31,9 +31,10 @@ local function CreateValues(Data, Player)
 	leaderstats.Name = "leaderstats"
 	leaderstats.Parent = Player
 
-	local Inventory = Instance.new("Folder")
-	Inventory.Name = "Inventory"
-	Inventory.Parent = Player
+	local Gliders = Instance.new("Folder")
+	Gliders.Name = "Gliders"
+	Gliders.Parent = Player
+
 	if Data["leaderstats"] then
 		for Name, Value in pairs(Data["leaderstats"]) do
 			local item = Instance.new("StringValue")
@@ -57,24 +58,36 @@ local function CreateValues(Data, Player)
 		end)
 	end
 
-	if Data["Inventory"] then
-		Inventory.Changed:Connect(function()
-			local inventoryData = {}
-			for _, Item in Inventory:GetChildren() do
-				inventoryData[Item.Name] = Item.Value
+	if Data["Gliders"] then
+
+		Gliders.Changed:Connect(function()
+			local gliderData = {}
+			for _, Glider in Gliders:GetChildren() do
+				gliderData[Glider.Name] = Glider.Value
 			end
-			DataCache[Player].Data["Inventory"] = inventoryData
+			DataCache[Player].Data["Gliders"] = gliderData
 		end)
 
-		for Index, Item in Data["Inventory"] do
-			local item = Instance.new("BoolValue")
-			item.Name = Index
-			item.Parent = Inventory
-			item.Value = Item
-			item.Changed:Connect(function()
-				DataCache[Player].Data["Inventory"][Index] = item.Value
+		for Index, Glider in Data["Gliders"] do
+			local glider = Instance.new("BoolValue")
+			glider.Name = Index
+			glider.Parent = Gliders
+			glider.Value = Glider
+			glider.Changed:Connect(function()
+				DataCache[Player].Data["Gliders"][Index] = glider.Value
 			end)
 		end
+
+	end
+
+	if Data["LastGlider"] then
+		local LastGlider = Instance.new("StringValue")
+		LastGlider.Name = "LastGlider"
+		LastGlider.Parent = Player
+		LastGlider.Value = Data["LastGlider"]
+		LastGlider.Changed:Connect(function()
+			DataCache[Player].Data["LastGlider"] = LastGlider.Value
+		end)
 	end
 
 	if Data["Settings"] then
@@ -238,45 +251,26 @@ function DataService:Set(Player, Key, Value)
 	return true
 end
 
-function DataService.Client:GetUnlockedZones(Player)
-	local PlayerData = GetData(Player)
-	repeat task.wait()
-		PlayerData = GetData(Player)
-	 until PlayerData
-
-	assert(PlayerData.Data["UnlockedZones"], string.format("Key %s does not exist", "UnlockedZones"))
-	local Data = PlayerData.Data["UnlockedZones"] or error(string.format("Key %s does not exist", "UnlockedZones"))
-
-	return Data
-end
-
-function DataService:SetTable(Player, Table, Key, Value)
-	if not Player then return end
-	if not DataCache[Player] then return end
-	Table[Key] = Value
-end
-
-function DataService:SetInventory(Player)
-	local PlayerData = GetData(Player)
-	repeat
-		PlayerData = GetData(Player)
-		task.wait() until PlayerData
-	local playerInventory = Player:FindFirstChild("Inventory"):GetChildren()
-	PlayerData.Data["Inventory"] = {}
-	for _, Item in playerInventory do
-		table.insert(PlayerData.Data["Inventory"], Item.Name)
+function DataService:AddGlider(Player, ID)
+	local Gliders = Player:FindFirstChild("Gliders")
+	local Glider = ReplicatedStorage.Assets.Gliders[ID]
+	if Gliders and Glider then
+		local GliderValue = Instance.new("BoolValue")
+		GliderValue.Name = ID
+		GliderValue.Parent = Gliders
+		GliderValue.Value = true
+		self:SaveGliderData(Player)
+		return true
+	else
+		return false
 	end
-	return DataService:Set(Player, "Inventory", PlayerData.Data["Inventory"])
 end
 
-function DataService:Save(Player)
+function DataService:SetTable(Player, Key, Table)
 	local PlayerData = GetData(Player)
 	repeat task.wait() until PlayerData
-	local BlockInventory = Player:FindFirstChild("BlockInventory"):GetChildren()
-	PlayerData.Data["BlockInventory"] = {}
-	for _, Item in BlockInventory do
-		PlayerData.Data["BlockInventory"][Item.Name] = Item.Value
-	end
+	PlayerData.Data[Key] = Table
+	return true
 end
 
 local ExposedData = {
@@ -300,10 +294,27 @@ function DataService.Client:RequestSet(Player, Key: string, Value)
 end
 
 function DataService:GetGliderData(Player)
-	local PlayerData = GetData(Player)
-	repeat task.wait() until PlayerData
-	local GliderData = PlayerData.Data["Gliders"]
-	return GliderData
+	local Gliders = Player:FindFirstChild("Gliders")
+	if Gliders then
+		local GliderData = {}
+		for _, Glider in Gliders:GetChildren() do
+			GliderData[Glider.Name] = Glider.Value
+		end
+		return GliderData
+	end
+end
+
+function DataService:SaveGliderData(Player)
+	local Gliders = Player:FindFirstChild("Gliders")
+	if Gliders then
+		local GliderData = {}
+		for _, Glider in Gliders:GetChildren() do
+			GliderData[Glider.Name] = Glider.Value
+		end
+		local PlayerData = GetData(Player)
+		PlayerData.Data["Gliders"] = GliderData
+		return true
+	end
 end
 
 local Current = 0

@@ -130,7 +130,6 @@ function Hud.new(ScreenGui, Interface)
         Tween.Completed:Wait()
         Tween:Destroy()
         TextTween:Destroy()
-        print("Coins changed")
     end)
 
     -- Invite Button

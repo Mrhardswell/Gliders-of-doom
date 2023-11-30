@@ -1,3 +1,4 @@
+local CollectionService = game:GetService("CollectionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local SoundService = game:GetService("SoundService")
 local Players = game:GetService("Players")
@@ -46,9 +47,16 @@ function Boost.Start(self)
 
 
         local Character = Hit.Parent
-        local Glider = GliderController.GetGlider(Character)
+        local Glider
+        
+        for i, Object in Character:GetChildren() do
+            if CollectionService:HasTag(Object, "Glider") then
+                Glider = Object
+                break
+            end
+        end
 
-        local Boost = Glider:FindFirstChild("Boost", true)
+        local Boost = Glider.Handle:WaitForChild("Boost")
         if not Boost then print("Glider has no boost attachment") return end
 
         local VectorForce = Boost:FindFirstChild("VectorForce")

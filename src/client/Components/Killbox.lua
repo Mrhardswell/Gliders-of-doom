@@ -11,11 +11,14 @@ function Killbox:Construct()
 end
 
 function Killbox.Start(self)
+    repeat task.wait() until Knit.FullyStarted
+
     self.Model.Touched:Connect(function(Hit)
         local Humanoid = Hit.Parent:FindFirstChild("Humanoid")
         if not Humanoid then return end
         Humanoid.Health = 0
     end)
+
 end
 
 return Killbox

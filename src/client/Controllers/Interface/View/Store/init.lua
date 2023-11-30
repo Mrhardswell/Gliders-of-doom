@@ -26,6 +26,7 @@ function Store.new(ScreenGui, Interface)
 
     self.ShopService = Knit.GetService("ShopService")
     self.DataService = Knit.GetService("DataService")
+    self.Item_Data = require(script.Items)
 
     self.ScreenGui = ScreenGui
     self.Main = ScreenGui.Main
@@ -45,9 +46,17 @@ function Store.new(ScreenGui, Interface)
     self.ActiveButtons = {}
     self.GliderData = nil
 
-    self.DataService:Get("Gliders"):andThen(function(Data)
-        self.GliderData = Data
-    end)
+    self.ColorTargets = {
+        On = {
+            Outer = Color3.fromRGB(255, 221, 85),
+            Inner = Color3.fromRGB(204, 175, 57),
+
+        },
+        Off = {
+            Outer = Color3.fromRGB(74, 255, 149),
+            Inner = Color3.fromRGB(59, 204, 115),
+        }
+    }
 
     self.ShopService:CheckGamepasses():andThen(function(Result)
         self.GamepassData = Result
@@ -93,6 +102,25 @@ function Store.new(ScreenGui, Interface)
 
             Data.Template.Parent = nil
 
+            local LastGlider = Player:WaitForChild("LastGlider")
+
+            LastGlider.Changed:Connect(function()
+                for _, Item in Player.Gliders:GetChildren() do
+                    if Item.Value then
+                        if Item.Name == LastGlider.Value then
+                            self.GliderPage[Item.Name].Buy.Main.Label.Text = "Equipped"
+                            self.GliderPage[Item.Name].Buy.Main.BackgroundColor3 = self.ColorTargets.On.Outer
+                            self.GliderPage[Item.Name].Buy.Main.Inner.BackgroundColor3 = self.ColorTargets.On.Inner
+                        else
+                            self.GliderPage[Item.Name].Buy.Main.Label.Text = "Equip"
+                            self.GliderPage[Item.Name].Buy.Main.BackgroundColor3 = self.ColorTargets.Off.Outer
+                            self.GliderPage[Item.Name].Buy.Main.Inner.BackgroundColor3 = self.ColorTargets.Off.Inner
+                        end
+                    end
+                end
+                print("Last Glider Changed", LastGlider.Value)
+            end)
+
             for Index, _Data in TargetData do
                 local ItemTemplate = Data.Template:Clone()
                 ItemTemplate.LayoutOrder = Index
@@ -100,12 +128,10 @@ function Store.new(ScreenGui, Interface)
                     local GliderId = _Data.ItemInfo.Name
                     if GliderId == nil then print("GliderId is nil", _Data) end
                     local Glider = ReplicatedStorage.Assets.Gliders:FindFirstChild(GliderId)
-
+                    
                     if not Glider then
-                        print("Glider Not Found", GliderId)
+                        warn("Glider Not Found", GliderId)
                         continue
-                    else
-                        print("Glider Found", GliderId)
                     end
 
                     local OriginalSize = ItemTemplate.Buy.Size
@@ -122,22 +148,62 @@ function Store.new(ScreenGui, Interface)
                         }),
                     }
 
+                    local Glider_data = self.Item_Data["Gliders"][1][GliderId]
+
                     ItemTemplate.Label.Text = GliderId
                     ItemTemplate.Name = GliderId
+                    ItemTemplate.LayoutOrder = Glider_data.ListLayout
 
                     ItemTemplate.Parent = self.Items[Button.Name]
 
                     local BuyButton = ItemTemplate.Buy
-                    local Owned = _Data.ItemInfo.Owned
+                    local Owned = Player.Gliders:FindFirstChild(GliderId)
+
+                    if Owned then
+                        Owned = Owned.Value
+                    end
 
                     BuyButton.Main.Label.Text = _Data.ItemInfo.Price
+
+                    local ViewportFrame = ItemTemplate.ViewportFrame
+
+                    local GliderModel = Instance.new("Model")
+                    GliderModel.Name = GliderId
+                    GliderModel.Parent = ViewportFrame
+
+                    local GliderClone = Glider:Clone()
+
+                    for _, Part in GliderClone:GetChildren() do
+                        Part.Parent = GliderModel
+                        if Part:IsA("Model") then
+                            for _, SubPart in Part:GetChildren() do
+                                SubPart.Anchored = true
+                            end
+                            continue
+                        end
+                        Part.Anchored = true
+                    end
+
+                    GliderClone:Destroy()
+
+                    local Camera = Instance.new("Camera")
+                    Camera.CameraSubject = GliderModel
+                    Camera.CameraType = Enum.CameraType.Scriptable
+                    Camera.CFrame = CFrame.new(GliderModel:GetPivot().Position + Vector3.new(0, 4, -7.5), GliderModel:GetPivot().Position)
+
+                    ViewportFrame.CurrentCamera = Camera
 
                     BuyButton:SetAttribute("ProductId", GliderId)
 
                     RegistedProducts[GliderId] = BuyButton
 
                     if Owned then
-                        ItemTemplate.Buy.Main.Label.Text = "Owned"
+                        ItemTemplate.Buy.Main.Label.Text = "Equip"
+                        if Player.LastGlider.Value == GliderId then
+                            ItemTemplate.Buy.Main.Label.Text = "Equipped"
+                            ItemTemplate.Buy.Main.BackgroundColor3 = self.ColorTargets.On.Outer
+                            ItemTemplate.Buy.Main.Inner.BackgroundColor3 = self.ColorTargets.On.Inner
+                        end
                     end
 
                     BuyButton:SetAttribute("Hovered", false)
@@ -163,13 +229,13 @@ function Store.new(ScreenGui, Interface)
                         UISounds.Click:Play()
                         Tweens.Pressed:Play()
 
-                        if not Owned then
-                            self.ShopService:BuyGlider(GliderId):andThen(function(Data)
-                                if Data then
-                                    print(Data)
-                                end
-                            end)
-                        end
+                        self.ShopService:BuyGlider(GliderId):andThen(function(Glider)
+                            if Glider then
+                                ItemTemplate.Buy.Main.Label.Text = "Equipped"
+                                ItemTemplate.Buy.Main.BackgroundColor3 = self.ColorTargets.On.Outer
+                                ItemTemplate.Buy.Main.Inner.BackgroundColor3 = self.ColorTargets.On.Inner
+                            end
+                        end)
 
                         Tweens.Pressed.Completed:Wait()
                         if BuyButton:GetAttribute("Hovered") then
@@ -339,6 +405,7 @@ function Store.new(ScreenGui, Interface)
         end
     end
 
+    -- Exit Button
     self.ExitTweens = {
         Hovered = TweenService:Create(self.Exit, TweenInfos.Hovered, {
             Size = self.ExitOriginalSize + UDim2.new(0, 3, 0, 3);
