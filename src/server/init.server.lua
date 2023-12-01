@@ -21,3 +21,5 @@ end
 Knit.AddServices(script.Services)
 Knit.Start():catch(warn)
 
+Knit.FullyStarted = true
+

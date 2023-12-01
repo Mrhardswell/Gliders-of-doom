@@ -2,8 +2,11 @@ local Knit = require(game.ReplicatedStorage.Packages.Knit)
 local Net = require(game.ReplicatedStorage.Packages.Net)
 
 local MarketplaceService = game:GetService("MarketplaceService")
+local ServerStorage = game:GetService("ServerStorage")
 
 local BlockMessage = Net:RemoteEvent("BlockMessage")
+
+local GameSettings = ServerStorage.GameSettings
 
 local DataTypeHandler = require(game.ReplicatedStorage.Shared.Modules.DataTypeHandler)
 
@@ -24,8 +27,8 @@ function Merchants.RequestSell(Player, Merchant)
     print("Coins: " .. Coins.Value)
 end
 
-local VIPID = 656809264
-local GroupID = 33193007
+local VIPID = GameSettings.VIPID.Value
+local GroupID = GameSettings.GroupID.Value
 
 function Merchants.Client:ClaimReward(Player, Reward)
     local function claimReward(rewardType, rewardAmount, rewardID)
@@ -64,8 +67,8 @@ function Merchants.Client:ClaimReward(Player, Reward)
 
             local leaderstats = Player:FindFirstChild("leaderstats")
             if not leaderstats then return end
-            local Reward = leaderstats:FindFirstChild(rewardType)
-            local RewardNumber = DataTypeHandler:StringToNumber(Reward.Value)
+            local Coins = leaderstats:FindFirstChild("Coins")
+            local RewardNumber = DataTypeHandler:StringToNumber(Coins.Value)
             Reward.Value = DataTypeHandler:AdaptiveNumberFormat(RewardNumber + rewardAmount, 3)
         end
     end

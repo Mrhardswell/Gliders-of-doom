@@ -159,29 +159,29 @@ local function CharacterAdded(Character)
 
                     BodyGyro.MaxTorque = Vector3.new(math.huge, 5000, 5000)
 
-                    thrustMagnitude = Root.Velocity.Magnitude * 1.5
+                    thrustMagnitude = getMass(Character)
 
                     if UserInputService:IsKeyDown(Enum.KeyCode.A) then
                         GoalCF = GoalCF * CFrame.Angles(0, math.rad(40), math.rad(30))
-                        BodyThrust.Force = -Root.CFrame.RightVector * thrustMagnitude * 3
+                        BodyThrust.Force = -CameraCF.RightVector * thrustMagnitude * 2
                     elseif UserInputService:IsKeyDown(Enum.KeyCode.D) then
                         GoalCF = GoalCF * CFrame.Angles(0, math.rad(-40), math.rad(-30))
-                        BodyThrust.Force = Root.CFrame.RightVector * thrustMagnitude * 3
+                        BodyThrust.Force = CameraCF.RightVector * thrustMagnitude * 2
                     end
 
                     if UserInputService:IsKeyDown(Enum.KeyCode.S) or UserInputService:IsKeyDown(Enum.KeyCode.Space) then
                         GoalCF = GoalCF * CFrame.Angles(math.rad(60), 0, 0)
-                        BodyThrust.Force = (Root.CFrame.UpVector + Root.CFrame.LookVector) * thrustMagnitude * 2
+                        BodyThrust.Force = (CameraCF.UpVector + CameraCF.LookVector) * thrustMagnitude * 2
                     end
 
                     if UserInputService:IsKeyDown(Enum.KeyCode.W) then
                         GoalCF = GoalCF * CFrame.Angles(math.rad(-10), 0, 0)
-                        BodyThrust.Force = Root.CFrame.LookVector * thrustMagnitude
+                        BodyThrust.Force = CameraCF.LookVector * thrustMagnitude
                     end
 
                     if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
                         GoalCF = GoalCF * CFrame.Angles(math.rad(-60), 0, 0)
-                        BodyThrust.Force = (-Root.CFrame.UpVector + Root.CFrame.LookVector) * thrustMagnitude * 2
+                        BodyThrust.Force = (-CameraCF.UpVector + CameraCF.LookVector) * thrustMagnitude * 2
                     end
 
                     BodyGyro.CFrame = BodyGyro.CFrame:Lerp(CameraCF * GoalCF, deltaTime * 10)
@@ -291,7 +291,6 @@ local function CharacterAdded(Character)
 
     end
 end
-
 
 function Glider:KnitStart()
     ShopService = Knit.GetService("ShopService")

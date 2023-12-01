@@ -19,7 +19,11 @@ DataStructure = {
     Settings = {
         Music = true,
         SFX = true,
-    }
+    },
+
+    Spins = 0,
+
+    History = {},
 
 }
 

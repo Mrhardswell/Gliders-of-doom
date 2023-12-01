@@ -17,9 +17,6 @@ function Merchant:Construct()
 end
 
 function Merchant.Start(self)
-    repeat task.wait() until Knit.Started
-    local Merchants = Knit.GetService("Merchants")
-
     local _Data = Data[self.Type]
 
     if not _Data then
@@ -32,9 +29,6 @@ function Merchant.Start(self)
     self.ProxymityPrompt.HoldDuration = 0.5
 
     self.ProxymityPrompt.Triggered:Connect(function(Player)
-        if self.Type == "Sell" then
-            Merchants.RequestSell(Player, self)
-        end
         if self.Type == "VIP" or "Group" then
             Triggered:FireClient(Player, self.Type, self.Model)
         end

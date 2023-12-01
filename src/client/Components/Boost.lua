@@ -45,10 +45,9 @@ function Boost.Start(self)
         if not Root then return end
         if not Humanoid then return end
 
-
         local Character = Hit.Parent
         local Glider
-        
+
         for i, Object in Character:GetChildren() do
             if CollectionService:HasTag(Object, "Glider") then
                 Glider = Object
@@ -56,6 +55,11 @@ function Boost.Start(self)
             end
         end
 
+        if not Glider then return end
+
+        local Handle = Glider:FindFirstChild("Handle")
+        if not Handle then print("Glider has no handle") return end
+        
         local Boost = Glider.Handle:WaitForChild("Boost")
         if not Boost then print("Glider has no boost attachment") return end
 

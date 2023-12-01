@@ -75,7 +75,8 @@ function Game.Client:CheckpointReached(Player)
     if not Coins then return end
 
     local CurrentCoins = DataTypeHandler:StringToNumber(Coins.Value)
-    Coins.Value = DataTypeHandler:NumberToString(CurrentCoins + RewardAmount)
+    local HasDoubleCoin = Player.Bonuses:FindFirstChild("Coins")
+    Coins.Value = DataTypeHandler:NumberToString(CurrentCoins + RewardAmount * (HasDoubleCoin and 2 or 1))
 
     return RewardAmount
 end
@@ -164,21 +165,27 @@ function Game:RegisterPlayer(Player)
             local DistanceLeft = (StartNode.Position - HumanoidRootPart.Position).Magnitude
             local _Progress = (DistanceLeft / Magnitude)
             Character:SetAttribute("Progress", _Progress)
+
+            local isCharacter = Player.Character
+            if not isCharacter then return end
+
+            local isRootPart = isCharacter:FindFirstChild("HumanoidRootPart")
+            if not isRootPart then return end
+
+            if Character.HumanoidRootPart.Position.Z < EndNode.Position.Z then
+                print(string.format("Player Crossed the Finish Line: %s", Player.Name))
+                
+                Character:PivotTo(workspace.SpawnLocation.CFrame + Vector3.new(0, 5, 0))
+
+                local leaderstats = Player:FindFirstChild("leaderstats")
+                local Wins = leaderstats:FindFirstChild("Wins")
+                if not Wins then return end
+                local CurrentWins = DataTypeHandler:StringToNumber(Wins.Value)
+                Wins.Value = DataTypeHandler:NumberToString(CurrentWins + 1)
+            end
         end
 
         self.RegisteredPlayers[Player].Timeleft = TimeLeft.Changed:Connect(UpdateIcon)
-
-        if Player.Character.HumanoidRootPart.Position.Z < EndNode.Position.Z then
-            print(string.format("Player Crossed the Finish Line: %s", Player.Name))
-
-            Player.Character:PivotTo(workspace.SpawnLocation.CFrame + Vector3.new(0, 5, 0))
-
-            local leaderstats = Player:FindFirstChild("leaderstats")
-            local Wins = leaderstats:FindFirstChild("Wins")
-            if not Wins then return end
-            local CurrentWins = DataTypeHandler:StringToNumber(Wins.Value)
-            Wins.Value = DataTypeHandler:NumberToString(CurrentWins + 1)
-        end
 
     end
 

@@ -77,19 +77,15 @@ function ShopService:BuyGlider(Player, ID)
     local Cost = ItemInfo.Price
 
     local GliderData = DataService:Get(Player, "Gliders")
-    print(GliderData)
 
     if GliderData then
         local GliderOwned = GliderData[ID]
-        print(GliderOwned)
-
         if not GliderOwned then
             if NumeralCoins >= Cost then
                 local success = DataService:AddGlider(Player, ID)
                 if success then
                     Coins.Value = DataTypeHandler:NumberToString(NumeralCoins - Cost)
                     local Glider = self:EquipGlider(Player, ID)
-                    print("Added Glider", ID)
                     return Glider
                 else
                     return false
@@ -133,7 +129,6 @@ function ShopService:EquipGlider(Player, GliderId)
             Player.Gliders[GliderId].Value = true
             Player.LastGlider.Value = GliderId
 
-            print("Equipped Glider", GliderId)
             return Glider
         end
     else
@@ -143,7 +138,6 @@ end
 
 function ShopService.Client:EquipLastGlider(Player)
     local LastGlider = DataService.DataCache[Player].Data["LastGlider"]
-    print("Equipping Last Glider", LastGlider)
     if LastGlider then
         local Character = Player.Character
         local Humanoid = Character:FindFirstChildOfClass("Humanoid")
@@ -160,6 +154,7 @@ function ShopService.Client:EquipLastGlider(Player)
             end
 
             Humanoid:AddAccessory(Glider)
+
             return Glider
         end
     else
@@ -186,6 +181,7 @@ end)
 MarketPlaceService.PromptProductPurchaseFinished:Connect(function(PlayerID, ID, Purchased)
     if Purchased then
         local IDinList = false
+
         for _, Item in ShopService.Items["Coins"] do
             if Item == ID then
                 IDinList = true
@@ -198,13 +194,36 @@ MarketPlaceService.PromptProductPurchaseFinished:Connect(function(PlayerID, ID, 
         local Name = ProductInfo.Name
 
         local isCoin = string.match(Name, "Coins")
+        local isSpin = string.match(Name, "Spin" or "Spins")
+
         local Amount = tonumber(string.match(Name, "%d+"))
 
         if IDinList and isCoin then
+
             local leaderstats = Player:WaitForChild("leaderstats")
             local Coins = leaderstats:WaitForChild("Coins")
             local CurrentCoins = DataTypeHandler:StringToNumber(Coins.Value)
             Coins.Value = DataTypeHandler:NumberToString(CurrentCoins + Amount)
+
+            DataService.DataCache[Player].Data["History"][os.time()] = {
+                Type = "Coins";
+                Amount = Amount;
+            }
+
+            print("Purchased Coins", Amount)
+
+        elseif isSpin then
+
+            local Spins = Player:WaitForChild("Spins")
+            Spins.Value += Amount
+
+            DataService.DataCache[Player].Data["History"][os.time()] = {
+                Type = "Spin";
+                Amount = Amount;
+            }
+
+            print("Purchased Spins:", Amount)
+
         end
 
         local Message = {
@@ -214,7 +233,7 @@ MarketPlaceService.PromptProductPurchaseFinished:Connect(function(PlayerID, ID, 
         }
 
         GameMessage:FireClient(Player, Message)
-        print("Product Info", ProductInfo)
+
     else
         warn("Failed to purchase product", ID)
     end

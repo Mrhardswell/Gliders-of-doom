@@ -19,6 +19,10 @@ local function PlayerAdded(Player)
     CoinsMultiplier.Name = "Coins"
     CoinsMultiplier.Parent = Bonuses
 
+    local FriendsMultiplier = Instance.new("NumberValue")
+    FriendsMultiplier.Name = "Friends"
+    FriendsMultiplier.Parent = Bonuses
+
     local function CheckForBonuses()
         local HasDoubleCoins = MarketplaceService:UserOwnsGamePassAsync(Player.UserId, DoubleCoinsId)
         CoinsMultiplier.Value = HasDoubleCoins
@@ -42,7 +46,21 @@ function MultiplierService.Client:CheckForBonuses(Player)
 
 end
 
-Players.PlayerAdded:Connect(PlayerAdded)
+Players.PlayerAdded:Connect(function(Player)
+    PlayerAdded(Player)
+    for _, player in Players:GetPlayers() do
+        local Friends = 0
+        for _, OtherPlayer in Players:GetPlayers() do
+            if OtherPlayer == player then
+                continue
+            end
+            if player:IsFriendsWith(OtherPlayer.UserId) then
+                Friends += 1
+            end
+        end
+        Player.Bonuses.Friends.Value = Friends
+    end
+end)
 
 for _, Player in Players:GetPlayers() do
     coroutine.wrap(PlayerAdded)(Player)

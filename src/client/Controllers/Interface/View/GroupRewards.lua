@@ -1,3 +1,4 @@
+
 local GroupRewards = {}
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")

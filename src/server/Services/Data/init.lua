@@ -47,6 +47,16 @@ local function CreateValues(Data, Player)
 		end
 	end
 
+	if Data["Spins"] then
+		local Spins = Instance.new("NumberValue")
+		Spins.Name = "Spins"
+		Spins.Parent = Player
+		Spins.Value = Data["Spins"]
+		Spins.Changed:Connect(function()
+			DataCache[Player].Data["Spins"] = Spins.Value
+		end)
+	end
+
 	if Data["TotalPlaytime"] then
 		local TotalPlaytime = Instance.new("NumberValue")
 		TotalPlaytime.Name = "TotalPlaytime"
