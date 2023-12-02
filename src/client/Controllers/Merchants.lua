@@ -3,7 +3,9 @@ local Net = require(game.ReplicatedStorage.Packages.Net)
 
 local Interface
 
-local MerchantController = Knit.CreateController { Name = "MerchantController" }
+local MerchantController = Knit.CreateController {
+    Name = "MerchantController"
+}
 
 function MerchantController:KnitStart()
     Interface = Knit.GetController("InterfaceController")

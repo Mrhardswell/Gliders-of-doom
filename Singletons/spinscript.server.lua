@@ -1,11 +1,8 @@
 local RepStorage = game:GetService("ReplicatedStorage")
 
-local MPS = game:GetService("MarketplaceService")
 local Remotes = RepStorage.RemoteEvents
 local Remote = Remotes.SpinWheel
-local ServerScriptService = game:GetService("ServerScriptService")
 local DataStore2 = require(RepStorage.ModuleScripts.DataStore2)
-local ugcHandler = require(ServerScriptService.UGCHandler)
 
 local DataTypeHandler = require(game.ReplicatedStorage.Shared.Modules.DataTypeHandler)
 
@@ -54,10 +51,15 @@ Remote.OnServerEvent:Connect(function(player)
 	if player:WaitForChild("Data"):WaitForChild("WheelSpins").Value >= 1 then
 		if player then
 			local reward = getRandomReward()
+			local Spins = player:FindFirstChild("Spins")
 
 			if reward then
-				player:WaitForChild("Data"):WaitForChild("WheelSpins").Value -= 1
+				if Spins then
+					Spins.Value = Spins.Value - 1
+				end
+
 				Remote:FireClient(player, reward)
+
 				if reward == "1" then
 					task.wait(4)
 					Coins.Value = DataTypeHandler:NumberToString(CurrentCoins + 500)
@@ -74,6 +76,7 @@ Remote.OnServerEvent:Connect(function(player)
 					task.wait(4)
 					UGCService:AwardUGC(player, UGCID)
 				end
+
 			end
 		end
 	end

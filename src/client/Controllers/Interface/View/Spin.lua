@@ -1,4 +1,5 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local MarketplaceService = game:GetService("MarketplaceService")
 local TweenService = game:GetService("TweenService")
 
 local Knit = require(ReplicatedStorage.Packages.Knit)
@@ -14,18 +15,39 @@ local TweenInfos = {
 function Spin.new(ScreenGui, Interface)
     local self = {}
 
-    self.WheelService = Knit.GetService("WheelService")
-
     self.ScreenGui = ScreenGui
     self.Exit = ScreenGui:FindFirstChild("Exit", true)
+    self.ExitOriginalSize = self.Exit.Size
+
     self.Main = ScreenGui:FindFirstChild("Main", true)
     self.SpinFrame = self.Main:FindFirstChild("SpinFrame")
 
-    self.Spin1 = ScreenGui.WheelSpin:FindFirstChild("Spin1")
-    self.Spin5 = ScreenGui.WheelSpin:FindFirstChild("Spin5")
-    self.Spin10 = ScreenGui.WheelSpin:FindFirstChild("Spin10")
+    self.WheelService = Knit.GetService("WheelService")
 
-    self.ExitOriginalSize = self.Exit.Size
+    self.Buttons = {
+        Spin1 = ScreenGui.WheelSpin:FindFirstChild("Spin1"),
+        Spin5 = ScreenGui.WheelSpin:FindFirstChild("Spin5"),
+        Spin10 = ScreenGui.WheelSpin:FindFirstChild("Spin10"),
+    }
+
+    self.Products = {
+        Spin1 = 1687767812,
+        Spin5 = 1687767849,
+        Spin10 = 1687767990,
+    }
+
+    for Name, Button in self.Buttons do
+        local ProductId = self.Products[Name]
+        if ProductId then
+            local ProductInfo = MarketplaceService:GetProductInfo(ProductId, Enum.InfoType.Product)
+            if Name == "Spin1" then
+                Button.Contents.Title.Text = "Spin!"
+            else
+                Button.Contents.Title.Text = string.format("R$ %s",ProductInfo.PriceInRobux)
+            end
+        end
+    
+    end
 
     self.WheelService:GetPrizes():andThen(function(Prizes)
         self.GetPrizes = Prizes
@@ -51,14 +73,16 @@ function Spin.new(ScreenGui, Interface)
             })
 
         }
-    
+
     }
 
     self.Exit:SetAttribute("Hovered", false)
 
     self.Exit.MouseButton1Click:Connect(function()
         self.Tweens.Exit.Pressed:Play()
+
         Interface:CloseUI(ScreenGui.Name)
+
         self.Tweens.Exit.Pressed.Completed:Wait()
 
         if self.Exit:GetAttribute("Hovered") then
@@ -66,6 +90,7 @@ function Spin.new(ScreenGui, Interface)
         else
             self.Tweens.Exit.Unhovered:Play()
         end
+
     end)
 
     self.Exit.MouseEnter:Connect(function()
