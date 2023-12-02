@@ -2,8 +2,13 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local MarketPlaceService = game:GetService("MarketplaceService")
 local CollectionService = game:GetService("CollectionService")
 
+local Library = ReplicatedStorage.Shared.Library
+
 local DataTypeHandler = require(ReplicatedStorage.Shared.Modules.DataTypeHandler)
-local GliderModule = require(script.Gliders)
+local ItemModules = {
+    Gliders = require(Library.Gliders),
+    Trails = require(Library.Trails)
+}
 
 local Knit = require(ReplicatedStorage.Packages.Knit)
 local Net = require(ReplicatedStorage.Packages.Net)
@@ -18,7 +23,7 @@ local ShopService = Knit.CreateService {
 local DataService
 
 function ShopService:KnitStart()
-    self.Items = require(script.Items)
+    self.Items = require(Library.Items)
     DataService = Knit.GetService("DataService")
 end
 
@@ -40,7 +45,7 @@ function ShopService.Client:GetItemData(Player, Type : string, InfoType : Enum.I
 
     if ItemData then
         for Index, Item in ItemData do
-            if type(Item) == "table" then
+            if InfoType == Enum.InfoType.Asset then
                 for i, Data in Item do
                     Items[i] = {
                         ItemInfo = Data;
@@ -68,8 +73,43 @@ function ShopService:AwardCoins(Player, Amount)
     Coins.Value = DataTypeHandler:NumberToString(CurrentCoins + Amount)
 end
 
+function ShopService:BuyItem(Player, ID, ItemType)
+    local ItemInfo = self.Items[ItemType][1][ID]
+    local leaderstats = Player:WaitForChild("leaderstats")
+    local Coins = leaderstats:WaitForChild("Coins")
+    local NumeralCoins = DataTypeHandler:StringToNumber(Coins.Value)
+    local Cost = ItemInfo.Price
 
-function ShopService:BuyGlider(Player, ID)
+    local ItemData = DataService:Get(Player, ItemType)
+
+    if ItemData then
+        local ItemOwned = ItemData[ID]
+
+        if not ItemOwned then
+            if NumeralCoins >= Cost then
+                local success = DataService:AddItem(Player, ID, ItemType)
+
+                if success then
+                    Coins.Value = DataTypeHandler:NumberToString(NumeralCoins - Cost)
+                    local Item = self:EquipItem(Player, ID, ItemType)
+                    return Item
+                else
+                    return false
+                end
+                    print("Bought and Equipped Glider", ID)
+                return ItemData
+                else
+                    print("Not enough coins")
+                return false
+            end
+        else
+            local Item = self:EquipItem(Player, ID, ItemType)
+            return Item
+        end
+    end
+end
+
+--[[function ShopService:BuyGlider(Player, ID)
     local ItemInfo = self.Items["Gliders"][1][ID]
     local leaderstats = Player:WaitForChild("leaderstats")
     local Coins = leaderstats:WaitForChild("Coins")
@@ -82,7 +122,7 @@ function ShopService:BuyGlider(Player, ID)
         local GliderOwned = GliderData[ID]
         if not GliderOwned then
             if NumeralCoins >= Cost then
-                local success = DataService:AddGlider(Player, ID)
+                local success = DataService:AddItem(Player, ID, "Gliders")
                 if success then
                     Coins.Value = DataTypeHandler:NumberToString(NumeralCoins - Cost)
                     local Glider = self:EquipGlider(Player, ID)
@@ -102,15 +142,49 @@ function ShopService:BuyGlider(Player, ID)
         end
     end
 
+end]]
+
+function ShopService.Client:BuyItem(Player, ID, ItemType)
+    return self.Server:BuyItem(Player, ID, ItemType)
 end
 
-function ShopService.Client:BuyGlider(Player, ID)
+--[[function ShopService.Client:BuyGlider(Player, ID)
     return self.Server:BuyGlider(Player, ID)
+end]]
+
+function ShopService:EquipItem(Player, ID, ItemType)
+    local LastItem = ItemType == "Gliders" and  Player:WaitForChild("LastGlider") or  Player:WaitForChild("LastTrail")
+    local ItemData = DataService:GetItemData(Player, ItemType)
+
+    if ItemData[ID] then
+        local Character = Player.Character
+        local Humanoid = Character:FindFirstChildOfClass("Humanoid")
+
+        if Humanoid then
+            local Item = ItemModules[ItemType][ID].Accessory:Clone()
+            LastItem.Value = ID
+
+            for _, Child in Character:GetChildren() do
+                if CollectionService:HasTag(Child, "Glider") or CollectionService:HasTag(Child, "Trail") then
+                    Child:Destroy()
+                end
+            end
+
+            Humanoid:AddAccessory(Item)
+
+            Player[ItemType][ID].Value = true
+            LastItem.Value = ID
+
+            return Item
+        end
+    else
+        return false
+    end
 end
 
-function ShopService:EquipGlider(Player, GliderId)
+--[[function ShopService:EquipGlider(Player, GliderId)
     local LastGlider = Player:WaitForChild("LastGlider")
-    local GliderData = DataService:GetGliderData(Player)
+    local GliderData = DataService:GetItemData(Player, "Gliders")
     if GliderData[GliderId] then
         local Character = Player.Character
         local Humanoid = Character:FindFirstChildOfClass("Humanoid")
@@ -134,9 +208,38 @@ function ShopService:EquipGlider(Player, GliderId)
     else
         return false
     end
+end]]
+
+function ShopService.Client:EquipLastItem(Player, ItemType)
+    local LastItem = ItemType == "Gliders" and "LastGlider" or "LastTrail"
+    local SingularItem = ItemType == "Gliders" and "Glider" or "Trail"
+    local LastItemData = DataService.DataCache[Player].Data[LastItem]
+
+    if LastItemData then
+        local Character = Player.Character
+        local Humanoid = Character:FindFirstChildOfClass("Humanoid")
+        if Humanoid then
+            local Item = ItemModules[ItemType][LastItemData].Accessory:Clone()
+            Character:SetAttribute(SingularItem, LastItemData.Name)
+
+            for _, Child in Character:GetChildren() do
+                if CollectionService:HasTag(Child, SingularItem) then
+                    if Item.Name == Child.Name then
+                        return Child
+                    end
+                end
+            end
+
+            Humanoid:AddAccessory(Item)
+
+            return Item
+        end
+    else
+        return false
+    end
 end
 
-function ShopService.Client:EquipLastGlider(Player)
+--[[function ShopService.Client:EquipLastGlider(Player)
     local LastGlider = DataService.DataCache[Player].Data["LastGlider"]
     if LastGlider then
         local Character = Player.Character
@@ -160,7 +263,7 @@ function ShopService.Client:EquipLastGlider(Player)
     else
         return false
     end
-end
+end]]
 
 MarketPlaceService.PromptGamePassPurchaseFinished:Connect(function(Player, ID, Purchased)
     if Purchased then

@@ -4,10 +4,22 @@ local UserInputService = game:GetService("UserInputService")
 local StarterGui = game:GetService("StarterGui")
 local RunService = game:GetService("RunService")
 
-local Knit = require(ReplicatedStorage.Packages.Knit)
-
 local Player = game.Players.LocalPlayer
 local Camera = workspace.CurrentCamera
+
+local Knit = require(ReplicatedStorage.Packages.Knit)
+local Input = require(ReplicatedStorage.Packages.Input)
+local Warnings = require(script.Warnings)
+
+local Keyboard = Input.Keyboard
+local Gamepad = Input.Gamepad
+
+local Gamepad1 = Gamepad.new(Enum.UserInputType.Gamepad1)
+
+local LastInputDevice = nil
+UserInputService.LastInputTypeChanged:Connect(function()
+    LastInputDevice = UserInputService:GetLastInputType()
+end)
 
 local ShopService
 
@@ -16,37 +28,23 @@ local Glider = Knit.CreateController {
     Client = {};
 }
 
+local JoystickPosition = Player:WaitForChild("JoystickPosition")
+
 local MaxForce = 10000
-local MaxAltitude = 1200
-local CooldownTime = 10
 local BaseThrottle = -300
 local thrustMagnitude = 200
 
 local UPWARD_ANGLE_THRESHOLD = 0.2
 local UPWARD_SPEED_FACTOR = 1
-local DOWNWARD_SPEED_FACTOR = 0.01
+local DOWNWARD_SPEED_FACTOR = 0.5
 local DRAG_COEFFICIENT = 0.6
 local MAX_FORCE = 1600
-local ALTITUDE_MAINTAIN_FORCE = 1500
 
 local AirDensity = 1.225
 
-local Cooldown = false
 local Connections = {}
-
-local Warnings = {
-    Height = {
-        [1] = "Your altitude is too high, you are going to fall!",
-        [2] = "There is no air up there!",
-        [3] = "Maximum altitude reached!",
-        [4] = "You are about to stall!"
-    },
-
-    Death = {
-        [1] = "You lost control of your glider and fell to your death!",
-        [2] = "Ouch! You fell to your death!",
-    }
-}
+local previousYPosition = nil
+local CurrentConnection = nil
 
 local function getMass(Model)
     local Mass = 0
@@ -58,34 +56,6 @@ local function getMass(Model)
     return Mass
 end
 
-local previousYPosition = nil
-
-local function calculateMaintainYForce(character)
-    local currentYPosition = character.HumanoidRootPart.Position.Y
-    if previousYPosition and currentYPosition < previousYPosition then
-        local mass = getMass(character)
-        local gravity = workspace.Gravity
-        previousYPosition = currentYPosition
-        return mass * gravity + ALTITUDE_MAINTAIN_FORCE
-    else
-        previousYPosition = currentYPosition
-        return 0
-    end
-end
-
-
-local function GetGlider(Character)
-    repeat task.wait() until Character:FindFirstChild("Humanoid")
-    return ShopService:EquipLastGlider(Character)
-end
-
-local function GetRandomWarning(Type)
-    local Random = math.random(1, #Warnings[Type])
-    return Warnings[Type][Random]
-end
-
-local CurrentConnection = nil
-
 local function Cleanup()
     if CurrentConnection then
         CurrentConnection:Disconnect()
@@ -93,12 +63,34 @@ local function Cleanup()
     end
 end
 
+local function calculateMaintainYForce(character)
+    local currentYPosition = character.HumanoidRootPart.Position.Y
+    if previousYPosition and currentYPosition < previousYPosition then
+        local mass = getMass(character)
+        local gravity = workspace.Gravity
+        previousYPosition = currentYPosition
+        return mass * gravity * 1.5
+    else
+        previousYPosition = currentYPosition
+        return 0
+    end
+end
+
+local function GetGlider(Character)
+    repeat task.wait() until Character:FindFirstChild("Humanoid")
+    return ShopService:EquipLastItem("Gliders")
+end
+
+local function GetRandomWarning(Type)
+    local Random = math.random(1, #Warnings[Type])
+    return Warnings[Type][Random]
+end
+
 local function CharacterAdded(Character)
     local Humanoid = Character:WaitForChild("Humanoid")
     local humanoidRootPart = Character:WaitForChild("HumanoidRootPart")
     if humanoidRootPart then
         local LastGlider = nil
-        local CurrentGlider = nil
 
         local BodyGyro = Instance.new("BodyGyro")
         BodyGyro.MaxTorque = Vector3.new(0, 0, 0)
@@ -130,9 +122,8 @@ local function CharacterAdded(Character)
             end
 
             if not _Glider then
-                ShopService:EquipLastGlider(Character):andThen(function(data)
+                ShopService:EquipLastItem("Gliders"):andThen(function(data)
                     _Glider = data
-
                 end):await()
             end
 
@@ -141,6 +132,7 @@ local function CharacterAdded(Character)
             local Boost = _Glider:WaitForChild("Handle"):WaitForChild("Boost")
             local VectorForce = Boost:WaitForChild("VectorForce")
 
+            -- Main Connections
             Connections["Death"] = Humanoid.Died:Connect(function()
                 StarterGui:SetCore("SendNotification", {
                     Title = "Glider";
@@ -158,30 +150,57 @@ local function CharacterAdded(Character)
                     local GoalCF = CFrame.new()
 
                     BodyGyro.MaxTorque = Vector3.new(math.huge, 5000, 5000)
-
                     thrustMagnitude = getMass(Character)
 
-                    if UserInputService:IsKeyDown(Enum.KeyCode.A) then
-                        GoalCF = GoalCF * CFrame.Angles(0, math.rad(40), math.rad(30))
-                        BodyThrust.Force = -CameraCF.RightVector * thrustMagnitude * 2
-                    elseif UserInputService:IsKeyDown(Enum.KeyCode.D) then
-                        GoalCF = GoalCF * CFrame.Angles(0, math.rad(-40), math.rad(-30))
-                        BodyThrust.Force = CameraCF.RightVector * thrustMagnitude * 2
+                    -- Keyboard Inputs
+                    local Forward = Keyboard:IsKeyDown(Enum.KeyCode.W) or Keyboard:IsKeyDown(Enum.KeyCode.Up)
+                    local Right = Keyboard:IsKeyDown(Enum.KeyCode.D) or Keyboard:IsKeyDown(Enum.KeyCode.Right)
+                    local Left = Keyboard:IsKeyDown(Enum.KeyCode.A) or Keyboard:IsKeyDown(Enum.KeyCode.Left)
+                    local Backward = Keyboard:IsKeyDown(Enum.KeyCode.S) or Keyboard:IsKeyDown(Enum.KeyCode.Down)
+
+                    local Climb = Keyboard:IsKeyDown(Enum.KeyCode.Space)
+                    local Dive = Keyboard:IsKeyDown(Enum.KeyCode.LeftControl)
+
+                    -- Controller Inputs
+                    if Gamepad1:IsConnected() and LastInputDevice == Enum.UserInputType.Gamepad1 then
+                        local Thumbstick1 = Gamepad1:GetThumbstick(Enum.KeyCode.Thumbstick1, 0.2)
+                        Left = Thumbstick1.X < -0.2
+                        Right = Thumbstick1.X > 0.2
+                        Forward = Thumbstick1.Y > 0.2
+                        Backward = Thumbstick1.Y < -0.2
+                        Climb = Gamepad1:IsButtonDown(Enum.KeyCode.ButtonA)
+                        Dive = Gamepad1:IsButtonDown(Enum.KeyCode.ButtonB)
                     end
 
-                    if UserInputService:IsKeyDown(Enum.KeyCode.S) or UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+                    -- States
+                    if Forward then
+                        GoalCF = GoalCF * CFrame.Angles(math.rad(-5), 0, 0)
+                        BodyThrust.Force = CameraCF.LookVector * thrustMagnitude * Root.Velocity.Magnitude / 10
+                    end
+
+                    if Backward then
                         GoalCF = GoalCF * CFrame.Angles(math.rad(60), 0, 0)
-                        BodyThrust.Force = (CameraCF.UpVector + CameraCF.LookVector) * thrustMagnitude * 2
+                        BodyThrust.Force = -CameraCF.LookVector * thrustMagnitude * 10
                     end
 
-                    if UserInputService:IsKeyDown(Enum.KeyCode.W) then
-                        GoalCF = GoalCF * CFrame.Angles(math.rad(-10), 0, 0)
-                        BodyThrust.Force = CameraCF.LookVector * thrustMagnitude
+                    if Climb then
+                        GoalCF = GoalCF * CFrame.Angles(math.rad(40), 0, 0)
+                        BodyThrust.Force = CameraCF.UpVector * thrustMagnitude * 10
                     end
 
-                    if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
-                        GoalCF = GoalCF * CFrame.Angles(math.rad(-60), 0, 0)
-                        BodyThrust.Force = (-CameraCF.UpVector + CameraCF.LookVector) * thrustMagnitude * 2
+                    if Dive then
+                        GoalCF = GoalCF * CFrame.Angles(math.rad(-40), 0, 0)
+                        BodyThrust.Force = -CameraCF.UpVector * thrustMagnitude * 10
+                    end
+
+                    if Right then
+                        GoalCF = GoalCF * CFrame.Angles(0, math.rad(-40), math.rad(-30))
+                        BodyThrust.Force = CameraCF.RightVector * thrustMagnitude * Root.Velocity.Magnitude
+                    end
+
+                    if Left then
+                        GoalCF = GoalCF * CFrame.Angles(0, math.rad(40), math.rad(30))
+                        BodyThrust.Force = -CameraCF.RightVector * thrustMagnitude * Root.Velocity.Magnitude
                     end
 
                     BodyGyro.CFrame = BodyGyro.CFrame:Lerp(CameraCF * GoalCF, deltaTime * 10)
@@ -190,7 +209,6 @@ local function CharacterAdded(Character)
                         VectorForce.RelativeTo = Enum.ActuatorRelativeTo.Attachment0
 
                         local CameraAngle = CameraCF.LookVector.Y
-                        local Altitude = Character.HumanoidRootPart.Position.Y
                         local AcumulatedForce = Character:GetAttribute("AcumulatedForce") or 0
 
                         if CameraAngle < 0 then
@@ -203,22 +221,6 @@ local function CharacterAdded(Character)
                             AcumulatedForce = MaxForce
                         end
 
-                        if Altitude >= MaxAltitude then
-                            AcumulatedForce -= Character.HumanoidRootPart.Velocity.Z
-                            Cooldown = true
-                            if not Cooldown then
-                                StarterGui:SetCore("SendNotification", {
-                                    Title = "Glider";
-                                    Text = GetRandomWarning("Height");
-                                    Duration = 5;
-                                })
-                            end
-                            task.delay(CooldownTime, function()
-                                Cooldown = false
-                            end)
-
-                        end
-
                         local Mass = getMass(Character)
                         local Weight = Mass * workspace.Gravity
                         local Velocity = Character.HumanoidRootPart.Velocity.Magnitude
@@ -227,10 +229,9 @@ local function CharacterAdded(Character)
 
                         local Force = Vector3.new(0, Weight, -math.abs(Root.Velocity.Z + AcumulatedForce))
                         local TotalForce = Force + Vector3.new(0, math.abs(Root.Velocity.Y) + Weight, -math.abs(Root.Velocity.Z)) + DragForce
-
                         local maintainYForce = calculateMaintainYForce(Character)
 
-                        TotalForce = TotalForce + Vector3.new(0, maintainYForce, 0)
+                        TotalForce = TotalForce + Vector3.new(0, maintainYForce/2, 0)
                         CameraAngle = math.clamp(CameraAngle, -.5, .5)
 
                         if CameraAngle > UPWARD_ANGLE_THRESHOLD then
@@ -238,10 +239,8 @@ local function CharacterAdded(Character)
                             if TotalForce.Y > MaxForce then
                                 TotalForce = Vector3.new(TotalForce.X, MaxForce, TotalForce.Z)
                             end
-                        elseif CameraAngle < 0 then
-                            TotalForce = TotalForce * Vector3.new(1, math.abs(1 + CameraAngle * DOWNWARD_SPEED_FACTOR * 2), 1 + CameraAngle * DOWNWARD_SPEED_FACTOR)
-                        else
-                            TotalForce = TotalForce * Vector3.new(1, 1, 1)
+                        elseif CameraAngle < -UPWARD_ANGLE_THRESHOLD then
+                            TotalForce = TotalForce * Vector3.new(1, math.abs(1 + CameraAngle * DOWNWARD_SPEED_FACTOR * 2), 1 + CameraAngle)
                         end
 
                         if TotalForce.Magnitude > MAX_FORCE then
@@ -276,7 +275,6 @@ local function CharacterAdded(Character)
             Cleanup()
         end
 
-
         CurrentConnection = Equipped()
 
         Character.ChildAdded:Connect(function(Child)
@@ -294,7 +292,7 @@ end
 
 function Glider:KnitStart()
     ShopService = Knit.GetService("ShopService")
-    task.spawn(CharacterAdded,Player.Character or Player.CharacterAdded:Wait())
+    task.spawn(CharacterAdded, Player.Character or Player.CharacterAdded:Wait())
     Player.CharacterAdded:Connect(CharacterAdded)
     Glider.GetGlider = GetGlider
 end

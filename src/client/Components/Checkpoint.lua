@@ -53,6 +53,7 @@ local RewardAmount = 10
 
 local function TrackCharacter(Character : Model)
     local Root = Character:WaitForChild("HumanoidRootPart")
+    repeat task.wait() until GameService
     if not Root then print("No root") return end
     if Connection then Connection:Disconnect() end
 

@@ -20,6 +20,7 @@ local DataTypeHandler = require(ReplicatedStorage.Shared.Modules.DataTypeHandler
 
 local GameUpdate = Net:RemoteEvent("GameUpdate")
 local Reset = Net:RemoteEvent("Reset")
+local DisplayWinner = Net:RemoteEvent("DisplayWinner")
 
 local MatchTime = 480
 local Current = 0
@@ -173,6 +174,7 @@ function Game:RegisterPlayer(Player)
             if not isRootPart then return end
 
             if Character.HumanoidRootPart.Position.Z < EndNode.Position.Z then
+                DisplayWinner:FireAllClients(Player.Name)
                 print(string.format("Player Crossed the Finish Line: %s", Player.Name))
                 
                 Character:PivotTo(workspace.SpawnLocation.CFrame + Vector3.new(0, 5, 0))

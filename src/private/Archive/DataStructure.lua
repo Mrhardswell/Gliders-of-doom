@@ -16,6 +16,9 @@ DataStructure = {
     Gliders = { ["Basic Glider"] = true },
     LastGlider = "Basic Glider",
 
+    Trails = {},
+    LastTrail = "None",
+
     Settings = {
         Music = true,
         SFX = true,

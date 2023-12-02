@@ -5,6 +5,11 @@
 
     "ReplicatedStorage": {
 
+      "Packages": {
+        "$ignoreUnknownInstances": true,
+        "$path": "Packages"
+      },
+
       "Shared": {
         "$ignoreUnknownInstances": true,
         "$path": "src/shared"

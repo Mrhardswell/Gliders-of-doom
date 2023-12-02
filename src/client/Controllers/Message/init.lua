@@ -73,4 +73,12 @@ Net:Connect("GameMessage", function(Message)
 
 end)
 
+Net:Connect("DisplayWinner", function(winnerName)
+    local winnerText = PlayerGui.HUD.WinnerText
+    winnerText.Visible = true
+    winnerText.Text = winnerName.." has achieved a win!"
+    task.wait(5)
+    winnerText.Visible = false
+end)
+
 return Messages

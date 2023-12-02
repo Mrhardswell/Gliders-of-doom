@@ -1,4 +1,5 @@
 local Gliders = require(script.Parent.Gliders)
+local Trails = require(script.Parent.Trails)
 
 local Items = {}
 
@@ -6,6 +7,7 @@ Items["Coins"] = {}
 Items["Gliders"] = {}
 Items["Spins"] = {}
 Items["Gamepass"] = {}
+Items["Trails"] = {}
 
 Items["Coins"][1] = 1687766968 -- 100 Coins
 Items["Coins"][2] = 1687767053 -- 500 Coins
@@ -144,6 +146,17 @@ Items["Gliders"][1] = {
         ListLayout = 12;
     };
 
+}
+
+Items["Trails"][1] = {
+    ["Fire Trail"] = {
+        Price = 2000;
+        Image = "rbxassetid://0";
+        Description = "A fire trail";
+        Owned = false;
+        Trail = Trails["Fire Trail"];
+        ListLayout = 1;
+    }
 }
 
 return Items

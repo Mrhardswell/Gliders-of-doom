@@ -27,6 +27,7 @@ function DataService.Client:GetInitialData(Player)
 end
 
 local function CreateValues(Data, Player)
+	print(Data)
 	local leaderstats = Instance.new("Folder")
 	leaderstats.Name = "leaderstats"
 	leaderstats.Parent = Player
@@ -34,6 +35,10 @@ local function CreateValues(Data, Player)
 	local Gliders = Instance.new("Folder")
 	Gliders.Name = "Gliders"
 	Gliders.Parent = Player
+
+	local Trails = Instance.new("Folder")
+	Trails.Name = "Trails"
+	Trails.Parent = Player
 
 	if Data["leaderstats"] then
 		for Name, Value in pairs(Data["leaderstats"]) do
@@ -90,6 +95,28 @@ local function CreateValues(Data, Player)
 
 	end
 
+	if Data["Trails"] then
+
+		Trails.Changed:Connect(function()
+			local gliderData = {}
+			for _, Glider in Trails:GetChildren() do
+				gliderData[Glider.Name] = Glider.Value
+			end
+			DataCache[Player].Data["Trails"] = gliderData
+		end)
+
+		for Index, Glider in Data["Trails"] do
+			local glider = Instance.new("BoolValue")
+			glider.Name = Index
+			glider.Parent = Trails
+			glider.Value = Glider
+			glider.Changed:Connect(function()
+				DataCache[Player].Data["Trails"][Index] = glider.Value
+			end)
+		end
+
+	end
+
 	if Data["LastGlider"] then
 		local LastGlider = Instance.new("StringValue")
 		LastGlider.Name = "LastGlider"
@@ -97,6 +124,16 @@ local function CreateValues(Data, Player)
 		LastGlider.Value = Data["LastGlider"]
 		LastGlider.Changed:Connect(function()
 			DataCache[Player].Data["LastGlider"] = LastGlider.Value
+		end)
+	end
+
+	if Data["LastTrail"] then
+		local LastTrail = Instance.new("StringValue")
+		LastTrail.Name = "LastTrail"
+		LastTrail.Parent = Player
+		LastTrail.Value = Data["LastTrail"]
+		LastTrail.Changed:Connect(function()
+			DataCache[Player].Data["LastTrail"] = LastTrail.Value
 		end)
 	end
 
@@ -261,6 +298,56 @@ function DataService:Set(Player, Key, Value)
 	return true
 end
 
+function DataService:AddItem(Player, ID, ItemType)
+	local ItemsFolder = Player:FindFirstChild(ItemType)
+	local Item = ReplicatedStorage.Assets[ItemType][ID]
+
+	if ItemsFolder and Item then
+		local ItemValue = Instance.new("BoolValue")
+
+		ItemValue.Name = ID
+		ItemValue.Parent = ItemsFolder
+		ItemValue.Value = true
+
+		self:SaveItemData(Player, ItemType)
+
+		return true
+	else
+		return false
+	end
+end	
+
+function DataService:GetItemData(Player, ItemType)
+	local ItemsFolder = Player:FindFirstChild(ItemType)
+
+	if ItemsFolder then
+		local ItemData = {}
+
+		for _, Item in ItemsFolder:GetChildren() do
+			ItemData[Item.Name] = Item.Value
+		end
+		
+		return ItemData
+	end
+end
+
+function DataService:SaveItemData(Player, ItemType)
+	local ItemsFolder = Player:FindFirstChild(ItemType)
+
+	if ItemsFolder then
+		local ItemData = {}
+		local PlayerData = GetData(Player)
+
+		for _, Item in ItemsFolder:GetChildren() do
+			ItemData[Item.Name] = Item.Value
+		end
+
+		PlayerData.Data[ItemType] = ItemData
+
+		return true
+	end
+end	
+
 function DataService:AddGlider(Player, ID)
 	local Gliders = Player:FindFirstChild("Gliders")
 	local Glider = ReplicatedStorage.Assets.Gliders[ID]
@@ -325,6 +412,13 @@ function DataService:SaveGliderData(Player)
 		PlayerData.Data["Gliders"] = GliderData
 		return true
 	end
+end
+
+function DataService:UpdatePlayerData(Player, Key, Value)
+	local PlayerData = GetData(Player)
+	repeat task.wait() until PlayerData
+	PlayerData.Data[Key] = Value
+	return true
 end
 
 local Current = 0

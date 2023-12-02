@@ -6,7 +6,8 @@ local TweenService = game:GetService("TweenService")
 
 local Knit = require(ReplicatedStorage.Packages.Knit)
 
-local GliderController = nil
+local GliderController
+local CharacterController
 
 local Player = Players.LocalPlayer
 local SFX = SoundService.SFX
@@ -36,6 +37,10 @@ function Boost.Start(self)
 
     if not GliderController then
         GliderController = Knit.GetController("GliderController")
+    end
+
+    if not CharacterController then
+        CharacterController = Knit.GetController("CharacterController")
     end
 
     self.Pad.Touched:Connect(function(Hit)
@@ -75,8 +80,6 @@ function Boost.Start(self)
 
         if not Root:GetAttribute("Boost") then
             Root:SetAttribute("Boost", true)
-        else
-            return
         end
 
         local PushPower = self.Pad:GetAttribute("PushPower")
@@ -84,8 +87,11 @@ function Boost.Start(self)
         local CurrentMass = getMass(Hit.Parent)
 
         if Root:GetAttribute("Boost") then
-            PushPower = PushPower * 2
+            PushPower = PushPower * 1.2
         end
+
+        Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        CharacterController:PlayAnimation("Boost")
 
         VectorForce.RelativeTo = Enum.ActuatorRelativeTo.World
 
