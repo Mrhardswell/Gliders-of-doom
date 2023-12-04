@@ -7,6 +7,8 @@ local RunService = game:GetService("RunService")
 local Player = game.Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
+local PlayerGui = Player.PlayerGui
+
 local Knit = require(ReplicatedStorage.Packages.Knit)
 local Input = require(ReplicatedStorage.Packages.Input)
 local Warnings = require(script.Warnings)
@@ -28,19 +30,20 @@ local Glider = Knit.CreateController {
     Client = {};
 }
 
-local JoystickPosition = Player:WaitForChild("JoystickPosition")
+local Mobile = PlayerGui:WaitForChild("Mobile")
+local MobileControls = Mobile.Main.Controls
 
 local MaxForce = 10000
 local BaseThrottle = -300
 local thrustMagnitude = 200
 
 local UPWARD_ANGLE_THRESHOLD = 0.2
-local UPWARD_SPEED_FACTOR = 1
-local DOWNWARD_SPEED_FACTOR = 0.5
-local DRAG_COEFFICIENT = 0.6
-local MAX_FORCE = 1600
+local UPWARD_SPEED_FACTOR = 0.8 -- The higher the value, the faster the player will go up
+local DOWNWARD_SPEED_FACTOR = 0.6 -- The higher the value, the faster the player will fall
+local DRAG_COEFFICIENT = 1
+local MAX_FORCE = 1600 -- In Newtons
 
-local AirDensity = 1.225
+local AirDensity = 1.225 -- In kg/m^3
 
 local Connections = {}
 local previousYPosition = nil
@@ -76,11 +79,6 @@ local function calculateMaintainYForce(character)
     end
 end
 
-local function GetGlider(Character)
-    repeat task.wait() until Character:FindFirstChild("Humanoid")
-    return ShopService:EquipLastItem("Gliders")
-end
-
 local function GetRandomWarning(Type)
     local Random = math.random(1, #Warnings[Type])
     return Warnings[Type][Random]
@@ -91,6 +89,7 @@ local function CharacterAdded(Character)
     local humanoidRootPart = Character:WaitForChild("HumanoidRootPart")
     if humanoidRootPart then
         local LastGlider = nil
+        local LastTrail = nil
 
         local BodyGyro = Instance.new("BodyGyro")
         BodyGyro.MaxTorque = Vector3.new(0, 0, 0)
@@ -110,6 +109,7 @@ local function CharacterAdded(Character)
             end
 
             local _Glider
+            local _Trail
 
             if LastGlider then
                 for _, Child in Character:GetChildren() do
@@ -121,13 +121,30 @@ local function CharacterAdded(Character)
                 end
             end
 
+            if LastTrail then
+                for _, Child in Character:GetChildren() do
+                    if CollectionService:HasTag(Child, "Trail") then
+                        if Child == LastTrail then
+                            _Trail = Child
+                        end
+                    end
+                end
+            end
+
             if not _Glider then
                 ShopService:EquipLastItem("Gliders"):andThen(function(data)
                     _Glider = data
                 end):await()
             end
 
+            if not _Trail then
+                ShopService:EquipLastItem("Trails"):andThen(function(data)
+                    _Trail = data
+                end):await()
+            end
+
             LastGlider = _Glider
+            LastTrail = _Trail
 
             local Boost = _Glider:WaitForChild("Handle"):WaitForChild("Boost")
             local VectorForce = Boost:WaitForChild("VectorForce")
@@ -153,10 +170,10 @@ local function CharacterAdded(Character)
                     thrustMagnitude = getMass(Character)
 
                     -- Keyboard Inputs
-                    local Forward = Keyboard:IsKeyDown(Enum.KeyCode.W) or Keyboard:IsKeyDown(Enum.KeyCode.Up)
-                    local Right = Keyboard:IsKeyDown(Enum.KeyCode.D) or Keyboard:IsKeyDown(Enum.KeyCode.Right)
-                    local Left = Keyboard:IsKeyDown(Enum.KeyCode.A) or Keyboard:IsKeyDown(Enum.KeyCode.Left)
-                    local Backward = Keyboard:IsKeyDown(Enum.KeyCode.S) or Keyboard:IsKeyDown(Enum.KeyCode.Down)
+                    local Forward = Keyboard:IsKeyDown(Enum.KeyCode.W) or Keyboard:IsKeyDown(Enum.KeyCode.Up) or MobileControls.Up:GetAttribute("Pressed")
+                    local Right = Keyboard:IsKeyDown(Enum.KeyCode.D) or Keyboard:IsKeyDown(Enum.KeyCode.Right) or MobileControls.Right:GetAttribute("Pressed")
+                    local Left = Keyboard:IsKeyDown(Enum.KeyCode.A) or Keyboard:IsKeyDown(Enum.KeyCode.Left) or MobileControls.Left:GetAttribute("Pressed")
+                    local Backward = Keyboard:IsKeyDown(Enum.KeyCode.S) or Keyboard:IsKeyDown(Enum.KeyCode.Down) or MobileControls.Down:GetAttribute("Pressed")
 
                     local Climb = Keyboard:IsKeyDown(Enum.KeyCode.Space)
                     local Dive = Keyboard:IsKeyDown(Enum.KeyCode.LeftControl)
@@ -177,30 +194,30 @@ local function CharacterAdded(Character)
                         GoalCF = GoalCF * CFrame.Angles(math.rad(-5), 0, 0)
                         BodyThrust.Force = CameraCF.LookVector * thrustMagnitude * Root.Velocity.Magnitude / 10
                     end
-
+                    
                     if Backward then
                         GoalCF = GoalCF * CFrame.Angles(math.rad(60), 0, 0)
-                        BodyThrust.Force = -CameraCF.LookVector * thrustMagnitude * 10
+                        BodyThrust.Force = -CameraCF.LookVector * thrustMagnitude * Root.Velocity.Magnitude / 10
                     end
 
                     if Climb then
                         GoalCF = GoalCF * CFrame.Angles(math.rad(40), 0, 0)
-                        BodyThrust.Force = CameraCF.UpVector * thrustMagnitude * 10
+                        BodyThrust.Force = CameraCF.UpVector * thrustMagnitude * Root.Velocity.Magnitude / 10
                     end
 
                     if Dive then
                         GoalCF = GoalCF * CFrame.Angles(math.rad(-40), 0, 0)
-                        BodyThrust.Force = -CameraCF.UpVector * thrustMagnitude * 10
+                        BodyThrust.Force = -CameraCF.UpVector * thrustMagnitude * Root.Velocity.Magnitude / 10
                     end
 
                     if Right then
                         GoalCF = GoalCF * CFrame.Angles(0, math.rad(-40), math.rad(-30))
-                        BodyThrust.Force = CameraCF.RightVector * thrustMagnitude * Root.Velocity.Magnitude
+                        BodyThrust.Force = CameraCF.RightVector * thrustMagnitude * Root.Velocity.Magnitude / 5
                     end
 
                     if Left then
                         GoalCF = GoalCF * CFrame.Angles(0, math.rad(40), math.rad(30))
-                        BodyThrust.Force = -CameraCF.RightVector * thrustMagnitude * Root.Velocity.Magnitude
+                        BodyThrust.Force = -CameraCF.RightVector * thrustMagnitude * Root.Velocity.Magnitude / 5
                     end
 
                     BodyGyro.CFrame = BodyGyro.CFrame:Lerp(CameraCF * GoalCF, deltaTime * 10)
@@ -228,7 +245,7 @@ local function CharacterAdded(Character)
                         local DragForce = Vector3.new(0, 0, -DragForceMagnitude)
 
                         local Force = Vector3.new(0, Weight, -math.abs(Root.Velocity.Z + AcumulatedForce))
-                        local TotalForce = Force + Vector3.new(0, math.abs(Root.Velocity.Y) + Weight, -math.abs(Root.Velocity.Z)) + DragForce
+                        local TotalForce = Force + Vector3.new(0, math.abs(Root.Velocity.Y) + Weight, -math.abs(Root.Velocity.Z/2)) + DragForce
                         local maintainYForce = calculateMaintainYForce(Character)
 
                         TotalForce = TotalForce + Vector3.new(0, maintainYForce/2, 0)
@@ -247,7 +264,7 @@ local function CharacterAdded(Character)
                             TotalForce = TotalForce.Unit * MAX_FORCE + Vector3.new(0, maintainYForce, BaseThrottle)
                         end
 
-                        if TotalForce.Magnitude < 200 then
+                        if TotalForce.Magnitude > 200 then
                             VectorForce.Force = TotalForce
                         else
                             VectorForce.Force = TotalForce * 0.75
@@ -278,8 +295,8 @@ local function CharacterAdded(Character)
         CurrentConnection = Equipped()
 
         Character.ChildAdded:Connect(function(Child)
-            if Child == LastGlider then return end
-            if Child:IsA("Accessory") and CollectionService:HasTag(Child, "Glider") then
+            if Child == LastGlider or Child == LastTrail then return end
+            if Child:IsA("Accessory") and CollectionService:HasTag(Child, "Glider") or CollectionService:HasTag(Child, "Trail") then
                 if CurrentConnection then
                     Cleanup()
                 end
@@ -294,7 +311,12 @@ function Glider:KnitStart()
     ShopService = Knit.GetService("ShopService")
     task.spawn(CharacterAdded, Player.Character or Player.CharacterAdded:Wait())
     Player.CharacterAdded:Connect(CharacterAdded)
-    Glider.GetGlider = GetGlider
+end
+
+
+function Glider:GetGlider(Character)
+    repeat task.wait() until Character:FindFirstChild("Humanoid")
+    return ShopService:EquipLastItem("Gliders")
 end
 
 return Glider

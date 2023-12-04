@@ -1,22 +1,54 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Knit = require(ReplicatedStorage.Packages.Knit)
+local Shake = require(ReplicatedStorage.Packages.Shake)
+local shake = Shake.new()
+
+local Camera = workspace.CurrentCamera
+local Player = game.Players.LocalPlayer
 
 local Animations = ReplicatedStorage.Assets.Animations
 
 local CharacterController = Knit.CreateController { Name = "CharacterController" }
+local Connection
+
+local RagdollService
+
+local function _Shake()
+    local priority = Enum.RenderPriority.Last.Value
+    shake.FadeInTime = 0
+    shake.Frequency = 0.08
+    shake.Amplitude = 3
+    shake.RotationInfluence = Vector3.new(0.1, 0.1, 0.1)
+    shake:Start()
+    shake:BindToRenderStep(Shake.NextRenderName(), priority, function(pos, rot, isDone)
+        Camera.CFrame *= CFrame.new(pos) * CFrame.Angles(rot.X, rot.Y, rot.Z)
+    end)
+end
 
 local function CharacterAdded(character)
     CharacterController:LoadAnimations(character)
-end 
+    local Humanoid = character:WaitForChild("Humanoid")
 
-local function CharacterRemoving(character)
+    Connection = Humanoid.Died:Connect(function()
+        RagdollService:CreateRagdoll():andThen(function(Data)
+            _Shake()
+            Connection:Disconnect()
+        end)
+    end)
+
+end
+
+local function CharacterRemoving()
     CharacterController:UnloadAnimations()
 end
 
 function CharacterController:KnitStart()
-    self.Player = game:GetService("Players").LocalPlayer
+    self.Player = Player
     self.AnimationCache = {}
+    self.Connections = {}
+
+    RagdollService = Knit.GetService("RagdollService")
 
     task.spawn(CharacterAdded, self.Player.Character or self.Player.CharacterAdded:Wait())
 
@@ -25,7 +57,6 @@ function CharacterController:KnitStart()
 end
 
 function CharacterController:LoadAnimations(character)
-    print("load")
     local animator = character:WaitForChild("Humanoid"):WaitForChild("Animator")
 
     for _, animation in Animations:GetChildren() do
@@ -34,22 +65,20 @@ function CharacterController:LoadAnimations(character)
 end
 
 function CharacterController:UnloadAnimations()
-    print("unload")
-    for _, animation in self.AnimationCache do
-        animation = nil
-    end
+    self.AnimationCache = {}
 end
 
 function CharacterController:PlayAnimation(animationName)
     self.AnimationCache[animationName]:Play()
-end 
+end
 
 function CharacterController:StopAnimation(animationName)
     self.AnimationCache[animationName]:Stop()
-end 
+end
 
 function CharacterController:ChangeAnimationSpeed(animationName, animationSpeed)
     self.AnimationCache[animationName]:AdjustSpeed(animationSpeed)
 end
+
 
 return CharacterController

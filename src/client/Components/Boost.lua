@@ -30,8 +30,6 @@ local function getMass(Model)
     return Mass
 end
 
-local Cooldown = 3
-
 function Boost.Start(self)
     repeat task.wait() until Knit.FullyStarted
 
@@ -97,12 +95,12 @@ function Boost.Start(self)
 
         local CurrentForce = VectorForce.Force
         local TargetForce = Vector3.new(0, PushPower + CurrentMass * PushDirection.Y, -math.abs(PushPower + CurrentMass * PushDirection.Z))
-        local Tween = TweenService:Create(VectorForce, TweenInfo.new(.5, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Force = TargetForce + CurrentForce})
+        local Tween = TweenService:Create(VectorForce, TweenInfo.new(.2, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Force = TargetForce + CurrentForce})
 
         Character:SetAttribute("AcumulatedForce", TargetForce.Z)
         SFX.Boost:Play()
         Tween:Play()
-        task.wait(Cooldown)
+        Tween.Completed:Wait()
         Root:SetAttribute("Boost", false)
 
     end)

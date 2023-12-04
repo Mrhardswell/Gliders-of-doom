@@ -4,6 +4,7 @@ local Buttons = {}
 local SocialService = game:GetService("SocialService")
 local SoundService = game:GetService("SoundService")
 local TweenService = game:GetService("TweenService")
+local MarketplaceService = game:GetService("MarketplaceService")
 
 local UISounds = SoundService:WaitForChild("UI")
 
@@ -72,6 +73,58 @@ local function HandleButton(Button, Interface)
 
 end
 
+local targetDate = os.time({
+    year = 2023, 
+    month = 12,
+    day = 8, 
+    hour = 19, 
+    min = 0, 
+    sec = 0
+})
+
+local function UpdateCountdownDisplay(object)
+    local Time = os.date("!*t", os.time())  
+    local currentDate = os.time(Time)
+    local secondsLeft = targetDate - currentDate
+    
+    if secondsLeft > 0 then
+        local days = math.floor(secondsLeft / (24 * 60 * 60))
+        local hours = math.floor((secondsLeft % (24 * 60 * 60)) / (60 * 60))
+        local minutes = math.floor((secondsLeft % (60 * 60)) / 60)
+    
+        object.Text = string.format("%dd %02dh %02dm", days, hours, minutes) 
+    end
+
+    return secondsLeft
+end
+
+local function HandleGliderShowcase(GliderShowcase, Interface)
+    if not GliderShowcase then return end
+    
+    GliderShowcase.MouseButton1Click:Connect(function()
+        MarketplaceService:PromptGamePassPurchase(Player,  652764638)
+    end)
+
+    task.spawn(function()
+        while true do
+            GliderShowcase.Sunburst.Rotation += 1
+            task.wait()
+        end
+    end)
+
+    task.spawn(function()
+        while true do
+            local secondsLeft = UpdateCountdownDisplay(GliderShowcase.Timer)
+
+            if secondsLeft <= 0 then
+                GliderShowcase:Destroy()
+
+                return
+            end 
+            task.wait(1)
+        end
+    end)
+end 
 function Hud.new(ScreenGui, Interface)
     local self = {}
 
@@ -85,6 +138,8 @@ function Hud.new(ScreenGui, Interface)
     self.GliderShowcase = ScreenGui:WaitForChild("GliderShowcase")
     self.Gifts = ScreenGui:WaitForChild("Gifts")
     self.Bonuses = ScreenGui:WaitForChild("Bonuses")
+
+    HandleGliderShowcase(self.GliderShowcase, Interface)
 
     self.BuyButtons = {
         Coins = self.ValueDisplays.Coins.Buy,

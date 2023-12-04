@@ -51,6 +51,7 @@ Net:Connect("BlockMessage", function(Message)
                 local Differance = string.match(Message.Text, "%d+")
                 local StatFrame = isUI
                 statChanged.Changed(Differance, StatFrame)
+                print("Changed", isKeyword, "by", Differance)
             end
         end
 
@@ -73,11 +74,25 @@ Net:Connect("GameMessage", function(Message)
 
 end)
 
-Net:Connect("DisplayWinner", function(winnerName)
+local WinnerTextTable = {
+    [1] = "%s has finished in First Place!",
+    [2] = "%s has finished in Second Place!",
+    [3] = "%s has finished in Third Place!"
+}
+
+Net:Connect("DisplayWinner", function(winnerName, winnerCount)
     local winnerText = PlayerGui.HUD.WinnerText
+    local textToDisplay
+
+    if winnerCount < 4 then
+        textToDisplay = string.format(WinnerTextTable[winnerCount], winnerName)
+    else
+        textToDisplay = string.format("%s has achieved a win!", winnerName)
+    end
+
     winnerText.Visible = true
-    winnerText.Text = winnerName.." has achieved a win!"
-    task.wait(5)
+    winnerText.Text = textToDisplay
+    wait(5)
     winnerText.Visible = false
 end)
 

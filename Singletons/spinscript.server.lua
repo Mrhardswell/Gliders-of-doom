@@ -1,12 +1,14 @@
-local RepStorage = game:GetService("ReplicatedStorage")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local MarketplaceService = game:GetService("MarketplaceService")
+local ServerStorage = game:GetService("ServerStorage")
 
-local Remotes = RepStorage.RemoteEvents
-local Remote = Remotes.SpinWheel
-local DataStore2 = require(RepStorage.ModuleScripts.DataStore2)
+local Remotes = ReplicatedStorage.RemoteEvents
+local SpinWheel = Remotes.SpinWheel
+local DataStore2 = require(ReplicatedStorage.ModuleScripts.DataStore2)
 
-local DataTypeHandler = require(game.ReplicatedStorage.Shared.Modules.DataTypeHandler)
+local DataTypeHandler = require(ReplicatedStorage.Shared.Modules.DataTypeHandler)
 
-local Knit = require(RepStorage.Packages.Knit)
+local Knit = require(ReplicatedStorage.Packages.Knit)
 
 repeat task.wait() until Knit.FullyStarted
 
@@ -15,121 +17,109 @@ local UGCService = Knit.GetService("UGCService")
 DataStore2.Combine("DATA", "MinutesLeft")
 
 local Rewards = {
-	["1"] = 1,
-	["2"] = 90,
-	["3"] = 2,
+	["1"] = 7,
+	["2"] = 84,
+	["3"] = 5,
 	["4"] = 1,
-	["5"] = 1,
+	["5"] = 3,
 }
 
 local function getRandomReward()
-	local totalWeight = 0
-	for _, weight in Rewards do
-		totalWeight = totalWeight + weight
+	local TotalRewardsWeight = 0
+
+	for _, RewardWeight in Rewards do
+		TotalRewardsWeight = TotalRewardsWeight + RewardWeight
 	end
 
-	local randomNumber = math.random() * totalWeight
-	local accumulatedWeight = 0
+	local randomGenerator = Random.new()
+	local randomNumber =  randomGenerator:NextInteger(1, TotalRewardsWeight)
 
-	for reward, weight in Rewards do
-		accumulatedWeight = accumulatedWeight + weight
-		if accumulatedWeight >= randomNumber then
-			return reward
+	for Reward, Weight in Rewards do
+		if randomNumber <= Weight then
+			return Reward
+		else
+			randomNumber -= Weight
 		end
 	end
 end
 
-local ServerStorage = game:GetService("ServerStorage")
+local GameSettings = ServerStorage.GameSettings
 local GameSettings = ServerStorage.GameSettings
 local UGCID = GameSettings.UGCID.Value
+local UGCID2 = GameSettings.UGCID2.Value
+local UGCID3 = GameSettings.UGCID3.Value
+local UGCID4 = GameSettings.UGCID4.Value
 
-Remote.OnServerEvent:Connect(function(player)
+SpinWheel.OnServerEvent:Connect(function(player)
     local leaderstats = player:WaitForChild("leaderstats")
-    local Coins = leaderstats:WaitForChild("Coins")
-    local CurrentCoins = DataTypeHandler:StringToNumber(Coins.Value)
+	local Coins = leaderstats:WaitForChild("Coins")
+	local CurrentCoins = DataTypeHandler:StringToNumber(Coins.Value)
 
 	if player:WaitForChild("Data"):WaitForChild("WheelSpins").Value >= 1 then
 		if player then
 			local reward = getRandomReward()
-			local Spins = player:FindFirstChild("Spins")
 
 			if reward then
-				if Spins then
-					Spins.Value = Spins.Value - 1
-				end
+				player.Data.WheelSpins.Value -= 1
 
-				Remote:FireClient(player, reward)
+				SpinWheel:FireClient(player, reward)
 
 				if reward == "1" then
 					task.wait(4)
-					Coins.Value = DataTypeHandler:NumberToString(CurrentCoins + 500)
+					UGCService:AwardUGC(player, UGCID2)
 				elseif reward == "2" then
 					task.wait(4)
-					Coins.Value = DataTypeHandler:NumberToString(CurrentCoins + 2500)
+					Coins.Value = DataTypeHandler:NumberToString(CurrentCoins + 5000)
 				elseif reward == "3" then
 					task.wait(4)
-					Coins.Value = DataTypeHandler:NumberToString(CurrentCoins + 7500)
+					UGCService:AwardUGC(player, UGCID3)
 				elseif reward == "4" then
 					task.wait(4)
-					Coins.Value = DataTypeHandler:NumberToString(CurrentCoins + 10000)
+					UGCService:AwardUGC(player, UGCID4)
 				elseif reward == "5" then
 					task.wait(4)
 					UGCService:AwardUGC(player, UGCID)
 				end
-
 			end
 		end
 	end
-
 end)
 
 -- Wheel Spins
 local function IncrementWheelSpins(player)
-	if game:GetService("MarketplaceService"):UserOwnsGamePassAsync(player.UserId, 645182658) then
-		player:WaitForChild("Data"):WaitForChild("WheelSpins").Value = player:WaitForChild("Data"):WaitForChild("WheelSpins").Value + 2
-	else
-		player:WaitForChild("Data"):WaitForChild("WheelSpins").Value = player:WaitForChild("Data"):WaitForChild("WheelSpins").Value + 1
+	local SpinsAmount = 1
+
+	if player:IsInGroup(33193007) then
+		SpinsAmount += 1
 	end
+
+	player.Data.WheelSpins.Value += SpinsAmount
 end
 
-local function giveSpins(player, amount)
-		player:WaitForChild("Data"):WaitForChild("WheelSpins").Value = player:WaitForChild("Data"):WaitForChild("WheelSpins").Value + amount
+local HourSeconds = 3600
+
+local function CountdownHour(Player)
+	local SpinTime = Player:WaitForChild("SpinTime")
+    local JoinTime = os.time()
+    local JoinDate = os.date("!*t", JoinTime)
+    local SecondsLeft = HourSeconds 
+
+    while os.time() < JoinTime + HourSeconds and Player do
+        SecondsLeft = JoinTime + HourSeconds - os.time()
+
+        local hours = math.floor(SecondsLeft / 3600)
+        local minutes = math.floor((SecondsLeft % 3600) / 60)
+        local seconds = SecondsLeft % 60
+
+		SpinTime.Value = string.format("%02dh %02dm %02ds", hours, minutes, seconds)
+        task.wait(1)
+    end
+
+    IncrementWheelSpins(Player)
 end
 
-script.GiveSkips.Event:Connect(function(player, amount)
-	giveSpins(player, amount)
+game.Players.PlayerAdded:Connect(function(Player)
+	while Player do
+		CountdownHour(Player)
+	end
 end)
-
-game.Players.PlayerAdded:Connect(function(player)
-	task.wait(2)
-	coroutine.resume(coroutine.create(function()
-		if player:IsInGroup(33193007) then
-			local minutesLeftStore = DataStore2("MinutesLeft", player)
-			local startingMinute = minutesLeftStore:Get(0)
-			if startingMinute >= 60 then
-				minutesLeftStore:Increment(-60)
-				IncrementWheelSpins(player)
-			end
-			while true do
-				for minute = startingMinute, 60, 1 do
-					task.wait(60)
-					minutesLeftStore:Increment(1)
-				end
-				IncrementWheelSpins(player)
-				minutesLeftStore:Increment(-60)
-			end
-		else
-			while true do
-				local minutesLeftStore = DataStore2("MinutesLeft", player)
-				local startingMinute = minutesLeftStore:Get(0)
-				for minute = startingMinute, 120, 1 do
-					task.wait(60)
-					minutesLeftStore:Increment(1)
-					minutesLeftStore:Increment(-120)
-				end
-				IncrementWheelSpins(player)
-			end
-		end
-	end))
-end)
-

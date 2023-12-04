@@ -40,6 +40,10 @@ local function CreateValues(Data, Player)
 	Trails.Name = "Trails"
 	Trails.Parent = Player
 
+	local SpinTime = Instance.new("StringValue")
+	SpinTime.Name = "SpinTime"
+	SpinTime.Parent = Player
+
 	if Data["leaderstats"] then
 		for Name, Value in pairs(Data["leaderstats"]) do
 			local item = Instance.new("StringValue")
@@ -156,11 +160,6 @@ local function PlayerAdded(player : Player)
 		profile:AddUserId(player.UserId)
 		profile:Reconcile()
 
-		profile:ListenToRelease(function()
-			DataCache[player] = nil
-			player:Kick("Profile was relased unexpectedly, data saved, please rejoin the game, if this issue persists please contact the developers")
-		end)
-
 		-- Check if the player is in the game
 		local Players = game:GetService("Players"):GetPlayers()
 
@@ -244,9 +243,10 @@ function DataService:GetPlayerData(Player)
 end
 
 function DataService:WaitForData(player)
-	repeat task.wait()
- 	until DataCache[player] ~= nil or player:IsDescendantOf(Players) == false
+	repeat task.wait() until DataCache[player] ~= nil or player:IsDescendantOf(Players) == false
+
 	local LeftServer = not player:IsDescendantOf(Players)
+
 	if LeftServer then
 		warn("Player Left Server while waiting for Data")
 		return false
@@ -277,28 +277,27 @@ function DataService:Get(Player, Key)
 end
 
 function DataService:Set(Player, Key, Value)
+	local profile = getProfile(Player)
+
+	if profile.Data[Key] ~= nil then
+		if typeof(profile.Data[Key]) == typeof(Value) then
+			profile.Data[Key] = Value
+		end
+	end
+end
+function DataService:Update(Player, Key, Callback)
 	local PlayerData = GetData(Player)
 	repeat task.wait() until PlayerData
-	local Typeof = type(Value)
 
-	if Typeof == "table" then
-		PlayerData.Data[Key] = Value
-		return true
-	else
-		PlayerData.Data[Key] = tostring(Value)
-	end
+	local OldData = DataService.Get(Player, Key) 
+	local NewData = Callback(OldData)
 
-	PlayerData.Data[Key] = tonumber(Value)
-
-	local leaderstats = Player:FindFirstChild("leaderstats")
-	if leaderstats then
-		leaderstats[Key].Value = tonumber(Value)
-	end
-
-	return true
+	DataService:Set(Player, Key, NewData)
 end
 
+
 function DataService:AddItem(Player, ID, ItemType)
+	print(ID, ItemType)
 	local ItemsFolder = Player:FindFirstChild(ItemType)
 	local Item = ReplicatedStorage.Assets[ItemType][ID]
 
@@ -341,6 +340,7 @@ function DataService:SaveItemData(Player, ItemType)
 		for _, Item in ItemsFolder:GetChildren() do
 			ItemData[Item.Name] = Item.Value
 		end
+		print(ItemData)
 
 		PlayerData.Data[ItemType] = ItemData
 

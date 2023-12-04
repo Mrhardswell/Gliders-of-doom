@@ -24,9 +24,11 @@ DataStructure = {
         SFX = true,
     },
 
-    Spins = 0,
+    Spins = 1,
 
     History = {},
+
+    FastestTime = 3600,
 
 }
 

@@ -3,6 +3,9 @@ local MarketplaceService = game:GetService("MarketplaceService")
 local TweenService = game:GetService("TweenService")
 
 local Knit = require(ReplicatedStorage.Packages.Knit)
+local Net = require(ReplicatedStorage.Packages.Net)
+
+local Player = game:GetService("Players").LocalPlayer
 
 local Spin = {}
 
@@ -49,6 +52,10 @@ function Spin.new(ScreenGui, Interface)
     
     end
 
+    Player.SpinTime:GetPropertyChangedSignal("Value"):Connect(function()
+        self.Buttons.Spin1.NextSpin.Text = "+1 Spin In "..Player.SpinTime.Value.."."
+    end)
+    
     self.WheelService:GetPrizes():andThen(function(Prizes)
         self.GetPrizes = Prizes
         print(self.GetPrizes)

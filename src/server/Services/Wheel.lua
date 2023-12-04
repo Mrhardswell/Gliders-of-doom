@@ -3,6 +3,7 @@ local MarketplaceService = game:GetService("MarketplaceService")
 local ServerStorage = game:GetService("ServerStorage")
 
 local Knit = require(ReplicatedStorage.Packages.Knit)
+local Net = require(ReplicatedStorage.Packages.Net)
 
 local GameSettings = ServerStorage:WaitForChild("GameSettings")
 

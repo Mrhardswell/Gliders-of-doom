@@ -175,7 +175,8 @@ function Store.new(ScreenGui, Interface)
                     local ViewportFrame = ItemTemplate.ViewportFrame
                     local OriginalSize = ItemTemplate.Buy.Size
 
-                    local ItemId = _Data.ItemInfo.Name                
+                    local ItemId = _Data.ItemInfo.Name   
+
                     if ItemId == nil then print("ItemId is nil", _Data) continue end
 
                     local Item = ReplicatedStorage.Assets[_Data.Type]:FindFirstChild(ItemId)
@@ -186,17 +187,15 @@ function Store.new(ScreenGui, Interface)
                     end
 
                     local Item_Data = self.Item_Data[_Data.Type][1][ItemId]
-
                     ItemTemplate.Label.Text = ItemId
                     ItemTemplate.Name = ItemId
                     ItemTemplate.LayoutOrder = Item_Data.ListLayout
 
-                    ItemTemplate.LayoutOrder = Index
                     BuyButton.Main.Label.Text = _Data.ItemInfo.Price
 
                     ItemTemplate.Parent = self.Items[Button.Name]
 
-                    local Owned = Player.Gliders:FindFirstChild(ItemId)
+                    local Owned = Player[_Data.Type]:FindFirstChild(ItemId)
 
                     if Owned then
                         Owned = Owned.Value
@@ -228,7 +227,7 @@ function Store.new(ScreenGui, Interface)
 
                     ViewportFrame.CurrentCamera = Camera
 
-                    BuyButton:SetAttribute("ProductId", ItemId)
+                    BuyButton:SetAttribute("TargetId", ItemId)
 
                     RegistedProducts[ItemId] = BuyButton
 
@@ -316,15 +315,15 @@ function Store.new(ScreenGui, Interface)
                 ItemTemplate.Icon.Image = Icon
 
                 local BuyButton = ItemTemplate.Buy
-                local ProductId = TargetType.ProductId
+                local TargetId = TargetType.TargetId
                 local Owned
 
-                BuyButton:SetAttribute("ProductId", ProductId)
+                BuyButton:SetAttribute("TargetId", TargetId)
 
-                RegistedProducts[ProductId] = BuyButton
+                RegistedProducts[TargetId] = BuyButton
 
                 if Button.Name == "Featured" then
-                    Owned = MarketPlaceService:UserOwnsGamePassAsync(Player.UserId, ProductId)
+                    Owned = MarketPlaceService:UserOwnsGamePassAsync(Player.UserId, TargetId)
                     if Owned then
                         ItemTemplate.Buy.Main.Label.Text = "Owned"
                     end
@@ -370,7 +369,7 @@ function Store.new(ScreenGui, Interface)
                     if Button.Name == "Featured" then
                         MarketPlaceService:PromptGamePassPurchase(Player, TargetType.TargetId)
                     elseif Button.Name == "Coins" then
-                        MarketPlaceService:PromptProductPurchase(Player, ProductId)
+                        MarketPlaceService:PromptProductPurchase(Player, TargetId)
                     end
                     Tweens.Pressed.Completed:Wait()
                     if BuyButton:GetAttribute("Hovered") then
@@ -431,15 +430,12 @@ function Store.new(ScreenGui, Interface)
             Data.Button.MouseButton1Click:Connect(function()
                 UISounds.Click:Play()
                 Data.Tweens.Pressed:Play()
-                if Data.Button.Name == "Featured" then
-                    self.UIPageLayout:JumpTo(self.FeaturedPage)
-                elseif Data.Button.Name == "Coins" then
-                    self.UIPageLayout:JumpTo(self.CoinsPage)
-                elseif Data.Button.Name == "Gliders" then
-                    self.UIPageLayout:JumpTo(self.GlidersPage)
-                end
+
+                self.UIPageLayout:JumpTo(self[Button.Name.."Page"])
                 JumpTo(Data.Button.Name)
+
                 Data.Tweens.Pressed.Completed:Wait()
+
                 if Data.Button:GetAttribute("Hovered") then
                     Data.Tweens.Hovered:Play()
                 else
@@ -448,7 +444,6 @@ function Store.new(ScreenGui, Interface)
             end)
 
             self.UIPageLayout:JumpTo(self.CoinsPage)
-
             JumpTo(StartingPage)
 
             self.ActiveButtons[Button] = Data
@@ -500,315 +495,18 @@ function Store.new(ScreenGui, Interface)
     return self
 end
 
-MarketPlaceService.PromptProductPurchaseFinished:Connect(function(Player, ProductId, PurchaseSuccess)
+MarketPlaceService.PromptGamePassPurchaseFinished:Connect(function(Player, TargetId, PurchaseSuccess)
     if PurchaseSuccess then
-        print("Product Purchase Success", ProductId)
-    else
-        print("Product Purchase Failed", ProductId)
-    end
-end)
+        print("Gamepass Purchase Success", TargetId)
+        local isProduct = RegistedProducts[TargetId]
 
-MarketPlaceService.PromptGamePassPurchaseFinished:Connect(function(Player, ProductId, PurchaseSuccess)
-    if PurchaseSuccess then
-        print("Gamepass Purchase Success", ProductId)
-        local isProduct = RegistedProducts[ProductId]
         if isProduct then
-            print("Product is now owned", ProductId)
-            RegistedProducts[ProductId].Main.Label.Text = "Owned"
+            print("Product is now owned", TargetId)
+            RegistedProducts[TargetId].Main.Label.Text = "Owned"
         end
     else
-        print("Gamepass Purchase Failed", ProductId)
+        print("Gamepass Purchase Failed", TargetId)
     end
 end)
-
---[[  for Index, _Data in TargetData do
-                local ItemTemplate = Data.Template:Clone()
-                ItemTemplate.LayoutOrder = Index
-
-                if _Data.Type == "Gliders" then
-                    local GliderId = _Data.ItemInfo.Name
-                    if GliderId == nil then print("GliderId is nil", _Data) end
-                    local Glider = ReplicatedStorage.Assets.Gliders:FindFirstChild(GliderId)
-                    
-                    if not Glider then
-                        warn("Glider Not Found", GliderId)
-                        continue
-                    end
-
-                    local OriginalSize = ItemTemplate.Buy.Size
-
-                    local Tweens = {
-                        Hovered = TweenService:Create(ItemTemplate.Buy, TweenInfos.Hovered, {
-                            Size = OriginalSize + UDim2.new(0, 2, 0, 2);
-                        }),
-                        Unhovered = TweenService:Create(ItemTemplate.Buy, TweenInfos.Unhovered, {
-                            Size = OriginalSize;
-                        }),
-                        Pressed = TweenService:Create(ItemTemplate.Buy, TweenInfos.Pressed, {
-                            Size = OriginalSize + UDim2.new(0, -2, 0, -2);
-                        }),
-                    }
-
-                    local Glider_data = self.Item_Data["Gliders"][1][GliderId]
-
-                    ItemTemplate.Label.Text = GliderId
-                    ItemTemplate.Name = GliderId
-                    ItemTemplate.LayoutOrder = Glider_data.ListLayout
-
-                    ItemTemplate.Parent = self.Items[Button.Name]
-
-                    local BuyButton = ItemTemplate.Buy
-                    local Owned = Player.Gliders:FindFirstChild(GliderId)
-
-                    if Owned then
-                        Owned = Owned.Value
-                    end
-
-                    BuyButton.Main.Label.Text = _Data.ItemInfo.Price
-
-                    local ViewportFrame = ItemTemplate.ViewportFrame
-
-                    local GliderModel = Instance.new("Model")
-                    GliderModel.Name = GliderId
-                    GliderModel.Parent = ViewportFrame
-
-                    local GliderClone = Glider:Clone()
-
-                    for _, Part in GliderClone:GetChildren() do
-                        Part.Parent = GliderModel
-                        if Part:IsA("Model") then
-                            for _, SubPart in Part:GetChildren() do
-                                SubPart.Anchored = true
-                            end
-                            continue
-                        end
-                        Part.Anchored = true
-                    end
-
-                    GliderClone:Destroy()
-
-                    local Camera = Instance.new("Camera")
-                    Camera.CameraSubject = GliderModel
-                    Camera.CameraType = Enum.CameraType.Scriptable
-                    Camera.CFrame = CFrame.new(GliderModel:GetPivot().Position + Vector3.new(0, 4, -7.5), GliderModel:GetPivot().Position)
-
-                    ViewportFrame.CurrentCamera = Camera
-
-                    BuyButton:SetAttribute("ProductId", GliderId)
-
-                    RegistedProducts[GliderId] = BuyButton
-
-                    if Owned then
-                        ItemTemplate.Buy.Main.Label.Text = "Equip"
-                        if Player.LastGlider.Value == GliderId then
-                            ItemTemplate.Buy.Main.Label.Text = "Equipped"
-                            ItemTemplate.Buy.Main.BackgroundColor3 = self.ColorTargets.On.Outer
-                            ItemTemplate.Buy.Main.Inner.BackgroundColor3 = self.ColorTargets.On.Inner
-                        end
-                    end
-
-                    BuyButton:SetAttribute("Hovered", false)
-
-                    BuyButton:GetAttributeChangedSignal("Hovered"):Connect(function()
-                        if BuyButton:GetAttribute("Hovered") then
-                            UISounds.Hover:Play()
-                            Tweens.Hovered:Play()
-                        else
-                            Tweens.Unhovered:Play()
-                        end
-                    end)
-
-                    BuyButton.MouseEnter:Connect(function()
-                        BuyButton:SetAttribute("Hovered", true)
-                    end)
-
-                    BuyButton.MouseLeave:Connect(function()
-                        BuyButton:SetAttribute("Hovered", false)
-                    end)
-
-                    BuyButton.MouseButton1Click:Connect(function()
-                        UISounds.Click:Play()
-                        Tweens.Pressed:Play()
-
-                        self.ShopService:BuyGlider(GliderId):andThen(function(Glider)
-                            if Glider then
-                                ItemTemplate.Buy.Main.Label.Text = "Equipped"
-                                ItemTemplate.Buy.Main.BackgroundColor3 = self.ColorTargets.On.Outer
-                                ItemTemplate.Buy.Main.Inner.BackgroundColor3 = self.ColorTargets.On.Inner
-                            end
-                        end)
-
-                        Tweens.Pressed.Completed:Wait()
-                        if BuyButton:GetAttribute("Hovered") then
-                            Tweens.Hovered:Play()
-                        else
-                            Tweens.Unhovered:Play()
-                        end
-
-                    end)
-
-                    ItemTemplate.Parent = self.Items[Button.Name]
-                    continue
-
-                elseif _Data.Type == "Trails" then
-                    -- TODO: Trails
-                    print("Trails not implemented yet")
-                    continue
-                end
-
-                local TargetType = if _Data.ItemInfo ~= nil then _Data.ItemInfo else _Data.GamepassInfo
-
-                local DisplayName = TargetType.Name
-                local Cost = TargetType.PriceInRobux or TargetType.Price
-                local IconId = TargetType.IconImageAssetId
-                local Icon = "rbxassetid://" .. IconId
-
-                if Cost == nil then print("Cost is nil",TargetType) Cost = "N/A" end
-
-                ItemTemplate.Label.Text = DisplayName
-                ItemTemplate.Name = DisplayName
-
-                ItemTemplate.Buy.Main.Label.Text = string.format("R$ %s", tostring(Cost))
-                ItemTemplate.Icon.Image = Icon
-
-                local BuyButton = ItemTemplate.Buy
-                local ProductId = TargetType.ProductId
-                local Owned
-
-                BuyButton:SetAttribute("ProductId", ProductId)
-
-                RegistedProducts[ProductId] = BuyButton
-
-                if Button.Name == "Featured" then
-                    Owned = MarketPlaceService:UserOwnsGamePassAsync(Player.UserId, ProductId)
-                    if Owned then
-                        ItemTemplate.Buy.Main.Label.Text = "Owned"
-                    end
-                end
-
-                local OriginalSize = BuyButton.Size
-
-                local Tweens = {
-                    Hovered = TweenService:Create(BuyButton, TweenInfos.Hovered, {
-                        Size = OriginalSize + UDim2.new(0, 2, 0, 2);
-                    }),
-                    Unhovered = TweenService:Create(BuyButton, TweenInfos.Unhovered, {
-                        Size = OriginalSize;
-                    }),
-                    Pressed = TweenService:Create(BuyButton, TweenInfos.Pressed, {
-                        Size = OriginalSize + UDim2.new(0, -2, 0, -2);
-                    }),
-                }
-
-                BuyButton:SetAttribute("Hovered", false)
-
-                BuyButton:GetAttributeChangedSignal("Hovered"):Connect(function()
-                    if BuyButton:GetAttribute("Hovered") then
-                        UISounds.Hover:Play()
-                        Tweens.Hovered:Play()
-                        else
-                        Tweens.Unhovered:Play()
-                    end
-                end)
-
-                BuyButton.MouseEnter:Connect(function()
-                    BuyButton:SetAttribute("Hovered", true)
-                end)
-
-                BuyButton.MouseLeave:Connect(function()
-                    BuyButton:SetAttribute("Hovered", false)
-                end)
-
-                BuyButton.MouseButton1Click:Connect(function()
-                    UISounds.Click:Play()
-                    Tweens.Pressed:Play()
-                    if Owned then return end
-                    if Button.Name == "Featured" then
-                        MarketPlaceService:PromptGamePassPurchase(Player, TargetType.TargetId)
-                    elseif Button.Name == "Coins" then
-                        MarketPlaceService:PromptProductPurchase(Player, ProductId)
-                    end
-                    Tweens.Pressed.Completed:Wait()
-                    if BuyButton:GetAttribute("Hovered") then
-                        Tweens.Hovered:Play()
-                    else
-                        Tweens.Unhovered:Play()
-                    end
-                end)
-
-                ItemTemplate.Parent = self.Items[Button.Name]
-            end
-
-            local function JumpTo(Name)
-                for _, Data in self.ActiveButtons do
-                    if Data.Button.Name == Name then
-                        Data.Button.On.Visible = true
-                        Data.Button.Off.Visible = false
-                    else
-                        Data.Button.On.Visible = false
-                        Data.Button.Off.Visible = true
-                    end
-                end
-            end
-
-            Data.OriginalSize = Data.Button.Size
-
-            Data.Tweens = {
-                Hovered = TweenService:Create(Data.Button, TweenInfos.Hovered, {
-                    Size = Data.OriginalSize + UDim2.new(0, 2, 0, 2);
-                }),
-                Unhovered = TweenService:Create(Data.Button, TweenInfos.Unhovered, {
-                    Size = Data.OriginalSize;
-                }),
-                Pressed = TweenService:Create(Data.Button, TweenInfos.Pressed, {
-                    Size = Data.OriginalSize + UDim2.new(0, -2, 0, -2);
-                }),
-            }
-
-            Data.Button:SetAttribute("Hovered", false)
-
-            Data.Button:GetAttributeChangedSignal("Hovered"):Connect(function()
-                if Data.Button:GetAttribute("Hovered") then
-                    UISounds.Hover:Play()
-                    Data.Tweens.Hovered:Play()
-                    else
-                    Data.Tweens.Unhovered:Play()
-                end
-            end)
-
-            Data.Button.MouseEnter:Connect(function()
-                Data.Button:SetAttribute("Hovered", true)
-            end)
-
-            Data.Button.MouseLeave:Connect(function()
-                Data.Button:SetAttribute("Hovered", false)
-            end)
-
-            Data.Button.MouseButton1Click:Connect(function()
-                UISounds.Click:Play()
-                Data.Tweens.Pressed:Play()
-                if Data.Button.Name == "Featured" then
-                    self.UIPageLayout:JumpTo(self.FeaturedPage)
-                elseif Data.Button.Name == "Coins" then
-                    self.UIPageLayout:JumpTo(self.CoinsPage)
-                elseif Data.Button.Name == "Gliders" then
-                    self.UIPageLayout:JumpTo(self.GlidersPage)
-                end
-                JumpTo(Data.Button.Name)
-                Data.Tweens.Pressed.Completed:Wait()
-                if Data.Button:GetAttribute("Hovered") then
-                    Data.Tweens.Hovered:Play()
-                else
-                    Data.Tweens.Unhovered:Play()
-                end
-            end)
-
-            self.UIPageLayout:JumpTo(self.CoinsPage)
-
-            JumpTo(StartingPage)
-
-            self.ActiveButtons[Button] = Data
-        end
-    end]]
 
 return Store

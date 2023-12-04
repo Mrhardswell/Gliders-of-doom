@@ -1,7 +1,6 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local CollectionService = game:GetService("CollectionService")
 local PhysicsService = game:GetService("PhysicsService")
-
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 
@@ -17,6 +16,7 @@ local Knit = require(ReplicatedStorage.Packages.Knit)
 local Net = require(ReplicatedStorage.Packages.Net)
 
 local DataTypeHandler = require(ReplicatedStorage.Shared.Modules.DataTypeHandler)
+local DataService
 
 local GameUpdate = Net:RemoteEvent("GameUpdate")
 local Reset = Net:RemoteEvent("Reset")
@@ -102,6 +102,8 @@ end
 
 function Game:EndMatch()
     self.GameState.Value = "Ended"
+    self.WinnerCount = 0
+
     Reset:FireAllClients()
     print("Match Ended")
     self:StartTimer()
@@ -174,8 +176,17 @@ function Game:RegisterPlayer(Player)
             if not isRootPart then return end
 
             if Character.HumanoidRootPart.Position.Z < EndNode.Position.Z then
-                DisplayWinner:FireAllClients(Player.Name)
-                print(string.format("Player Crossed the Finish Line: %s", Player.Name))
+                self.WinnerCount += 1
+
+                DisplayWinner:FireAllClients(Player.Name, self.WinnerCount)    
+
+                local FastestTime = DataService:Get(Player, "FastestTime")
+                local CompletedTime = TimeLeft.Value - MatchTime
+
+                if CompletedTime < FastestTime then
+                    DataService:Set(Player, "FastestTime", CompletedTime)
+                    print(CompletedTime)
+                end
                 
                 Character:PivotTo(workspace.SpawnLocation.CFrame + Vector3.new(0, 5, 0))
 
@@ -187,7 +198,7 @@ function Game:RegisterPlayer(Player)
             end
         end
 
-        self.RegisteredPlayers[Player].Timeleft = TimeLeft.Changed:Connect(UpdateIcon)
+        self.RegisteredPlayers[Player].Timeleft .Value= TimeLeft.Changed:Connect(UpdateIcon)
 
     end
 
@@ -207,7 +218,12 @@ function Game:KnitInit()
 end
 
 function Game:KnitStart()
+    repeat task.wait() until Knit.FullyStarted
+
+    DataService = Knit.GetService("DataService")
+
     self.GameState.Value = "Waiting"
+    self.WinnerCount = 0
 
     for _, Player in Players:GetPlayers() do
         self:RegisterPlayer(Player)

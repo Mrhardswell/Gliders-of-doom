@@ -20,9 +20,9 @@ Items["Spins"][2] = 1687767849 -- 5 Spins
 Items["Spins"][3] = 1687767990 -- 10 Spins
 
 Items["Gamepass"][1] = 656809264 -- VIP
-Items["Gamepass"][2] = 652764638 -- Basic Glider
+Items["Gamepass"][2] = 652764638 -- Batwing Glider
 Items["Gamepass"][3] = 655593490 -- 2x Coins
-Items["Gamepass"][4] = 647946037 -- 2x Wins
+Items["Gamepass"][4] = 647946037 -- 2x Wins 
 
 Items["Gliders"][1] = {
 
@@ -146,17 +146,98 @@ Items["Gliders"][1] = {
         ListLayout = 12;
     };
 
+    ["Golden Glider"] = {
+        Name = "Golden Glider";
+        Price = 100000;
+        Image = "rbxassetid://0";
+        Description = "A golden glider";
+        Owned = false;
+        Glider = Gliders["Golden Glider"];
+        ListLayout = 13;
+    };
+
+    ["Batwings Glider"] = {
+        Name = "Batwings Glider";
+        Price = "529 Robux";
+        Gamepass = 652764638;
+        Image = "rbxassetid://0";
+        Description = "A Batwing glider";
+        Owned = false;
+        Glider = Gliders["Batwing Glider"];
+        ListLayout = 14;
+    };
 }
 
 Items["Trails"][1] = {
+    ["Cloud Trail"] = {
+        Name = "Cloud Trail";
+        Price = 4500;
+        Image = "rbxassetid://0";
+        Description = "A cloud trail";
+        Owned = false;
+        Trail = Trails["Cloud Trail"];
+        ListLayout = 1;
+    };
+
     ["Fire Trail"] = {
-        Price = 2000;
+        Name = "Fire Trail";
+        Price = 8500;
         Image = "rbxassetid://0";
         Description = "A fire trail";
         Owned = false;
         Trail = Trails["Fire Trail"];
-        ListLayout = 1;
-    }
+        ListLayout = 2;
+    };
+
+    ["Poison Trail"] = {
+        Name = "Poison Trail";
+        Price = 8500;
+        Image = "rbxassetid://0";
+        Description = "A poison trail";
+        Owned = false;
+        Trail = Trails["Poison Trail"];
+        ListLayout = 3;
+    };
+
+    ["Anime Trail"] = {
+        Name = "Anime Trail";
+        Price = 12500;
+        Image = "rbxassetid://0";
+        Description = "An anime trail";
+        Owned = false;
+        Trail = Trails["Anime Trail"];
+        ListLayout = 4;
+    };
+
+    ["Meme Trail"] = {
+        Name = "Meme Trail";
+        Price = 14500;
+        Image = "rbxassetid://0";
+        Description = "A meme trail";
+        Owned = false;
+        Trail = Trails["Meme Trail"];
+        ListLayout = 5;
+    };
+
+    ["Star Trail"] = {
+        Name = "Star Trail";
+        Price = 25000;
+        Image = "rbxassetid://0";
+        Description = "A star trail";
+        Owned = false;
+        Trail = Trails["Star Trail"];
+        ListLayout = 6;
+    };
+
+    ["Rainbow Trail"] = {
+        Name = "Rainbow Trail";
+        Price = 35000;
+        Image = "rbxassetid://0";
+        Description = "A rainbow trail";
+        Owned = false;
+        Trail = Trails["Rainbow Trail"];
+        ListLayout = 7;
+    };
 }
 
 return Items
