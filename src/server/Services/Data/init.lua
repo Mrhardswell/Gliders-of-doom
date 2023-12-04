@@ -276,12 +276,20 @@ function DataService:Get(Player, Key)
 	return Data
 end
 
-function DataService:Set(Player, Key, Value)
-	local profile = getProfile(Player)
+function DataService:GetRemaster(Player, Key)
+	local PlayerData = GetData(Player)
 
-	if profile.Data[Key] ~= nil then
-		if typeof(profile.Data[Key]) == typeof(Value) then
-			profile.Data[Key] = Value
+	if PlayerData.Data[Key] ~= nil then
+		return  PlayerData.Data[Key]
+	end
+end
+
+function DataService:Set(Player, Key, Value)
+	local PlayerData = GetData(Player)
+
+	if PlayerData.Data[Key] ~= nil then
+		if typeof(PlayerData.Data[Key]) == typeof(Value) then
+			PlayerData.Data[Key] = Value
 		end
 	end
 end

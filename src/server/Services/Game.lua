@@ -1,6 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local CollectionService = game:GetService("CollectionService")
 local PhysicsService = game:GetService("PhysicsService")
+local DataStoreService = game:GetService("DataStoreService")
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 
@@ -27,7 +28,9 @@ local Current = 0
 local Interval = 1
 local RewardAmount = 10
 
-local TimeLeft = Instance.new("NumberValue",ReplicatedStorage)
+local TimeLeft = Instance.new("NumberValue")
+TimeLeft.Parent = ReplicatedStorage
+
 TimeLeft.Name = "TimeLeft"
 TimeLeft.Value = MatchTime
 
@@ -181,11 +184,10 @@ function Game:RegisterPlayer(Player)
                 DisplayWinner:FireAllClients(Player.Name, self.WinnerCount)    
 
                 local FastestTime = DataService:Get(Player, "FastestTime")
-                local CompletedTime = TimeLeft.Value - MatchTime
+                local CompletedTime = MatchTime - TimeLeft.Value
 
                 if CompletedTime < FastestTime then
                     DataService:Set(Player, "FastestTime", CompletedTime)
-                    print(CompletedTime)
                 end
                 
                 Character:PivotTo(workspace.SpawnLocation.CFrame + Vector3.new(0, 5, 0))
@@ -198,7 +200,7 @@ function Game:RegisterPlayer(Player)
             end
         end
 
-        self.RegisteredPlayers[Player].Timeleft .Value= TimeLeft.Changed:Connect(UpdateIcon)
+        self.RegisteredPlayers[Player].TimeLeft = TimeLeft.Changed:Connect(UpdateIcon)
 
     end
 
@@ -207,8 +209,15 @@ end
 function Game:RemovePlayer(Player)
     if self.RegisteredPlayers[Player] then
         self.RegisteredPlayers[Player].PlayerIcon:Destroy()
-        self.RegisteredPlayers[Player].Timeleft:Disconnect()
+        self.RegisteredPlayers[Player].TimeLeft:Disconnect()
         self.RegisteredPlayers[Player] = nil
+
+        local fastestTime = DataService:GetRemaster(Player, "FastestTime")
+
+        for _, leaderboard in workspace:WaitForChild("Leaderboards"):GetChildren() do
+            local datastore = DataStoreService:GetOrderedDataStore(leaderboard.Name)
+            datastore:SetAsync(Player.Name, fastestTime)
+        end
     end
     print("Removed Player: " .. Player.Name)
 end
