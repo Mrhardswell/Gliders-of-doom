@@ -87,37 +87,12 @@ function Store.new(ScreenGui, Interface)
             local Data = {}
             local TargetData = self[Button.Name.."Data"]
             
-            --[[  if Button.Name == "Featured" then
-                TargetData = self.FeaturedData
-            elseif Button.Name == "Coins" then
-                TargetData = self.CoinsData
-            elseif Button.Name == "Gliders" then
-                TargetData = self.GlidersData
-            elseif Button.Name == "Trails" then
-                TargetData = self.TrailsData
-            end
-            ]]
-
             Data.Button = Button
 
             Data.Template = self[Button.Name.."Page"].Template:Clone()
             self[Button.Name.."Page"].Template.Parent = nil
             Data.Template.Parent = nil
-            
-            --[[ if Button.Name == "Featured" then
-                Data.Template = self.FeaturedPage.Template:Clone()
-                self.FeaturedPage.Template.Parent = nil
-            elseif Button.Name == "Coins" then
-                Data.Template = self.CoinsPage.Template:Clone()
-                self.CoinsPage.Template.Parent = nil
-            elseif Button.Name == "Gliders" then
-                Data.Template = self.GlidersPage.Template:Clone()
-                self.GlidersPage.Template.Parent = nil
-            elseif Button.Name == "Trails" then
-                Data.Template = self.TrailsPage.Template:Clone()
-                self.TrailsPage.Template.Parent = nil
-            end]]
-            
+                        
             local LastTrail = Player:WaitForChild("LastTrail")
             local LastGlider = Player:WaitForChild("LastGlider")
 
@@ -148,24 +123,6 @@ function Store.new(ScreenGui, Interface)
             LastGlider.Changed:Connect(function()
                 itemChanged("Gliders")
             end)
-
-            --[[LastGlider.Changed:Connect(function()
-                for _, Item in Player.Gliders:GetChildren() do
-                    if Item.Value then
-                        if Item.Name == LastGlider.Value then
-                            self.GlidersPage[Item.Name].Buy.Main.Label.Text = "Equipped"
-                            self.GlidersPage[Item.Name].Buy.Main.BackgroundColor3 = self.ColorTargets.On.Outer
-                            self.GlidersPage[Item.Name].Buy.Main.Inner.BackgroundColor3 = self.ColorTargets.On.Inner
-                        else
-                            self.GlidersPage[Item.Name].Buy.Main.Label.Text = "Equip"
-                            self.GlidersPage[Item.Name].Buy.Main.BackgroundColor3 = self.ColorTargets.Off.Outer
-                            self.GlidersPage[Item.Name].Buy.Main.Inner.BackgroundColor3 = self.ColorTargets.Off.Inner
-                        end
-                    end
-                end
-                print("Last Glider Changed", LastGlider.Value)
-            end)
-            ]]
             
             for Index, _Data in TargetData do
                 local ItemTemplate = Data.Template:Clone()
@@ -277,13 +234,16 @@ function Store.new(ScreenGui, Interface)
                         UISounds.Click:Play()
                         Tweens.Pressed:Play()
 
-                        self.ShopService:BuyItem(ItemId, _Data.Type):andThen(function(Glider)
-                            print(Glider)
-                            if Glider then
+                        self.ShopService:BuyItem(ItemId, _Data.Type):andThen(function(DataType, BuyData)
+                            if DataType == "Accessory" then
                                 ItemTemplate.Buy.Main.Label.Text = "Equipped"
                                 ItemTemplate.Buy.Main.BackgroundColor3 = self.ColorTargets.On.Outer
                                 ItemTemplate.Buy.Main.Inner.BackgroundColor3 = self.ColorTargets.On.Inner
-                            end
+                            elseif DataType == "Gamepass" then
+                                MarketPlaceService:PromptGamePassPurchase(Player, BuyData)
+                            elseif DataType == "DevProduct" then
+                                MarketPlaceService:PromptProductPurchase(Player, BuyData)
+                            end     
                         end)
 
                         Tweens.Pressed.Completed:Wait()

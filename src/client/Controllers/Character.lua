@@ -30,11 +30,13 @@ local function CharacterAdded(character)
     CharacterController:LoadAnimations(character)
     local Humanoid = character:WaitForChild("Humanoid")
 
+    if Connection then
+        Connection:Disconnect()
+    end
+
     Connection = Humanoid.Died:Connect(function()
-        RagdollService:CreateRagdoll():andThen(function(Data)
-            _Shake()
-            Connection:Disconnect()
-        end)
+        _Shake()
+        RagdollService:CreateRagdoll()
     end)
 
 end

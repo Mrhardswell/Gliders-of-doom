@@ -4,7 +4,6 @@ local ServerStorage = game:GetService("ServerStorage")
 
 local Remotes = ReplicatedStorage.RemoteEvents
 local SpinWheel = Remotes.SpinWheel
-local DataStore2 = require(ReplicatedStorage.ModuleScripts.DataStore2)
 
 local DataTypeHandler = require(ReplicatedStorage.Shared.Modules.DataTypeHandler)
 
@@ -14,13 +13,11 @@ repeat task.wait() until Knit.FullyStarted
 
 local UGCService = Knit.GetService("UGCService")
 
-DataStore2.Combine("DATA", "MinutesLeft")
-
 local Rewards = {
-	["1"] = 7,
-	["2"] = 84,
-	["3"] = 5,
-	["4"] = 1,
+	["1"] = 1,
+	["2"] = 93,
+	["3"] = 1,
+	["4"] = 2,
 	["5"] = 3,
 }
 
@@ -90,7 +87,7 @@ local function IncrementWheelSpins(player)
 	local SpinsAmount = 1
 
 	if player:IsInGroup(33193007) then
-		SpinsAmount += 1
+		SpinsAmount += 2
 	end
 
 	player.Data.WheelSpins.Value += SpinsAmount

@@ -303,6 +303,16 @@ function DataService:Update(Player, Key, Callback)
 	DataService:Set(Player, Key, NewData)
 end
 
+function DataService:GetTableKey(Player, Table, Key)
+	local PlayerData = GetData(Player)
+
+	if PlayerData.Data[Table] ~= nil then
+		if PlayerData.Data[Table][Key] ~= nil then
+			return	PlayerData.Data[Table][Key]
+		end
+	end
+end
+
 
 function DataService:AddItem(Player, ID, ItemType)
 	print(ID, ItemType)

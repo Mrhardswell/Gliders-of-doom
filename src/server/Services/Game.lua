@@ -1,5 +1,6 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local CollectionService = game:GetService("CollectionService")
+local ServerScriptService = game:GetService("ServerScriptService")
 local PhysicsService = game:GetService("PhysicsService")
 local DataStoreService = game:GetService("DataStoreService")
 local RunService = game:GetService("RunService")
@@ -16,6 +17,7 @@ local PlayerIcon = ProgressIcon.PlayerIcon
 local Knit = require(ReplicatedStorage.Packages.Knit)
 local Net = require(ReplicatedStorage.Packages.Net)
 
+local LeaderboardData = require(ServerScriptService.Server.Services.Data.LeaderboardData)
 local DataTypeHandler = require(ReplicatedStorage.Shared.Modules.DataTypeHandler)
 local DataService
 
@@ -116,6 +118,7 @@ function Game:RegisterPlayer(Player)
     if not self.RegisteredPlayers[Player] then
         self.RegisteredPlayers[Player] = {}
         local Character = Player.Character or Player.CharacterAdded:Wait()
+        local Humanoid = Character:WaitForChild("Humanoid")
         local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
 
         Player.CharacterAdded:Connect(function(character)
@@ -179,24 +182,38 @@ function Game:RegisterPlayer(Player)
             if not isRootPart then return end
 
             if Character.HumanoidRootPart.Position.Z < EndNode.Position.Z then
-                self.WinnerCount += 1
+                if Humanoid and Humanoid.Health > 0 then
+                    self.WinnerCount += 1
 
-                DisplayWinner:FireAllClients(Player.Name, self.WinnerCount)    
-
-                local FastestTime = DataService:Get(Player, "FastestTime")
-                local CompletedTime = MatchTime - TimeLeft.Value
-
-                if CompletedTime < FastestTime then
-                    DataService:Set(Player, "FastestTime", CompletedTime)
+                    if self.WinnerCount == 1 then
+                        DataService:Update(Player, "Spins", function(currentValue)
+                            return currentValue + 1
+                        end)
+                    end
+    
+                    DisplayWinner:FireAllClients(Player.Name, self.WinnerCount)
+    
+                    local FastestTime = DataService:Get(Player, "FastestTime")
+                    local CompletedTime = MatchTime - TimeLeft.Value
+                    local MinimumTime = LeaderboardData.FastestTime.MinimumTime
+    
+                    if CompletedTime < FastestTime then
+                        if CompletedTime >= MinimumTime then
+                            DataService:Set(Player, "FastestTime", CompletedTime)
+                        else
+                            warn("Completed lap too fast!")
+                        end
+                    end
+                    
+                    Character:PivotTo(workspace.SpawnLocation.CFrame + Vector3.new(0, 5, 0))
+                    Reset:FireClient(Player)
+    
+                    local leaderstats = Player:FindFirstChild("leaderstats")
+                    local Wins = leaderstats:FindFirstChild("Wins")
+                    if not Wins then return end
+                    local CurrentWins = DataTypeHandler:StringToNumber(Wins.Value)
+                    Wins.Value = DataTypeHandler:NumberToString(CurrentWins + 1)
                 end
-                
-                Character:PivotTo(workspace.SpawnLocation.CFrame + Vector3.new(0, 5, 0))
-
-                local leaderstats = Player:FindFirstChild("leaderstats")
-                local Wins = leaderstats:FindFirstChild("Wins")
-                if not Wins then return end
-                local CurrentWins = DataTypeHandler:StringToNumber(Wins.Value)
-                Wins.Value = DataTypeHandler:NumberToString(CurrentWins + 1)
             end
         end
 
@@ -206,20 +223,76 @@ function Game:RegisterPlayer(Player)
 
 end
 
+local function canUpdateLeaderboardData(ascending, data1, data2)
+    if ascending then
+        print(data1, data2, data1 >= data2)
+        if data1 >= data2 then return false end -- Data1 must be smaller than data2 to return true, example 100 seconds are less than 200 seconds
+    else
+        print(data1, data2, data1 <= data2)
+        if data1 <= data2 then return false end -- Data1 must be bigger than data2 to return true, example 5 wins are bigger than 3 wins
+    end
+
+    return true
+end
+
 function Game:RemovePlayer(Player)
     if self.RegisteredPlayers[Player] then
         self.RegisteredPlayers[Player].PlayerIcon:Destroy()
         self.RegisteredPlayers[Player].TimeLeft:Disconnect()
         self.RegisteredPlayers[Player] = nil
 
-        local fastestTime = DataService:GetRemaster(Player, "FastestTime")
+        local data = {
+            ["FastestTime"] = DataService:GetRemaster(Player, "FastestTime"),
+            ["Wins"] = DataService:GetTableKey(Player, "leaderstats", "Wins")
+        }
 
         for _, leaderboard in workspace:WaitForChild("Leaderboards"):GetChildren() do
             local datastore = DataStoreService:GetOrderedDataStore(leaderboard.Name)
-            datastore:SetAsync(Player.Name, fastestTime)
+            local dataToSetTo = math.abs(tonumber(data[leaderboard.Name])) 
+            local leaderboardData = LeaderboardData[leaderboard.Name]
+            local entryHolder = leaderboard.LeaderboardGui.EntryHolder
+            local ascending = leaderboardData.Ascending
+            local minimum
+
+            if entryHolder:FindFirstChild(Player.Name) then
+                local entryData = entryHolder[Player.Name]:GetAttribute("Data")
+
+                local canUpdate = canUpdateLeaderboardData(ascending, dataToSetTo, entryData)
+
+                if not canUpdate then continue end
+            end
+
+            repeat task.wait() until #entryHolder:GetChildren() >= leaderboardData.Pages -- Waits for all the pages to load before trying to find the minimum
+
+            for _, entry in entryHolder:GetChildren() do
+                if entry.ClassName ~= "Frame" or entry.Name == "EntryTemplate" then continue end
+        
+                local entryData = entry:GetAttribute("Data")
+            
+                if not minimum then
+                    minimum = entryData
+                else
+                    if ascending then
+                        if minimum > entryData then -- Gets the biggest number on the lb, for example the biggest minimum is 200 seconds so your time must be less than 200 seconds
+                            continue
+                        end
+					else
+                        if minimum < entryData then -- Gets the smallest number lb, for example your wins need to be greather than 2
+                            continue
+                        end
+                    end
+            
+                    minimum = entryData
+                end
+			end
+            
+            local canUpdate = canUpdateLeaderboardData(ascending, dataToSetTo, minimum)
+
+            if not canUpdate then continue end
+
+            datastore:SetAsync(Player.Name, dataToSetTo)
         end
     end
-    print("Removed Player: " .. Player.Name)
 end
 
 function Game:KnitInit()

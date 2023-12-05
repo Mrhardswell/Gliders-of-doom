@@ -5,6 +5,7 @@ local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 
 local Knit = require(ReplicatedStorage.Packages.Knit)
+local Rings = require(script.Rings)
 
 local GliderController
 local CharacterController
@@ -18,6 +19,12 @@ local Boost = Knit.Component.new {
 
 function Boost:Construct()
     self.Pad = self.Instance
+    self.Mesh = self.Pad:FindFirstChildWhichIsA("MeshPart")
+
+    if self.Mesh then
+        self.OriginalSize = self.Mesh.Size
+        self.MeshTween = TweenService:Create(self.Mesh, Rings.TweenInfo, {Size = self.OriginalSize * 1.5, Transparency = 1})
+    end
 end
 
 local function getMass(Model)
@@ -76,31 +83,41 @@ function Boost.Start(self)
             end
         end
 
-        if not Root:GetAttribute("Boost") then
-            Root:SetAttribute("Boost", true)
-        end
-
         local PushPower = self.Pad:GetAttribute("PushPower")
         local PushDirection = self.Pad:GetAttribute("PushDirection")
         local CurrentMass = getMass(Hit.Parent)
 
         if Root:GetAttribute("Boost") then
             PushPower = PushPower * 1.2
+            CharacterController:PlayAnimation("Boost")
+        end
+
+        if not Root:GetAttribute("Boost") then
+            Root:SetAttribute("Boost", true)
         end
 
         Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-        CharacterController:PlayAnimation("Boost")
-
         VectorForce.RelativeTo = Enum.ActuatorRelativeTo.World
 
         local CurrentForce = VectorForce.Force
         local TargetForce = Vector3.new(0, PushPower + CurrentMass * PushDirection.Y, -math.abs(PushPower + CurrentMass * PushDirection.Z))
         local Tween = TweenService:Create(VectorForce, TweenInfo.new(.2, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Force = TargetForce + CurrentForce})
 
+        if self.Mesh then
+            self.MeshTween:Play()
+            self.Mesh.Color = Rings.Used
+            task.delay(0.3,function()
+                self.Mesh.Color = Rings.Normal
+            end)
+        end
+
         Character:SetAttribute("AcumulatedForce", TargetForce.Z)
+
         SFX.Boost:Play()
+
         Tween:Play()
         Tween.Completed:Wait()
+
         Root:SetAttribute("Boost", false)
 
     end)

@@ -14,6 +14,7 @@ Items["Coins"][2] = 1687767053 -- 500 Coins
 Items["Coins"][3] = 1687767186 -- 2000 Coins
 Items["Coins"][4] = 1687767340 -- 5000 Coins
 Items["Coins"][5] = 1687767419 -- 10000 Coins
+Items["Coins"][6] = 1699686212 -- 100000 Coins
 
 Items["Spins"][1] = 1687767812 -- 1 Spin
 Items["Spins"][2] = 1687767849 -- 5 Spins
@@ -23,6 +24,9 @@ Items["Gamepass"][1] = 656809264 -- VIP
 Items["Gamepass"][2] = 652764638 -- Batwing Glider
 Items["Gamepass"][3] = 655593490 -- 2x Coins
 Items["Gamepass"][4] = 647946037 -- 2x Wins 
+Items["Gamepass"][5] = 667487004 -- Meme Bundle
+Items["Gamepass"][6] = 667826914 -- Robot Bundle
+Items["Gamepass"][7] = 666963418 -- Fantasy Bundle
 
 Items["Gliders"][1] = {
 

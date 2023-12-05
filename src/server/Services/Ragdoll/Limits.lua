@@ -22,7 +22,7 @@ RagdollLimit.ANKLE_LIMITS = {
 	UpperAngle = 10,
 	TwistLowerAngle = -10,
 	TwistUpperAngle = 10,
-	FrictionTorque = 50;
+	FrictionTorque = 150;
 	ReferenceMass = 0.43671694397926,
 }
 
@@ -30,7 +30,7 @@ RagdollLimit.ELBOW_LIMITS = {
 	UpperAngle = 20,
 	TwistLowerAngle = 5,
 	TwistUpperAngle = 120,
-	FrictionTorque = 100;
+	FrictionTorque = 200;
 	ReferenceMass = 0.70196455717087,
 }
 
@@ -46,7 +46,7 @@ RagdollLimit.KNEE_LIMITS = {
 	UpperAngle = 5,
 	TwistLowerAngle = -120,
 	TwistUpperAngle = -5,
-	FrictionTorque = 200;
+	FrictionTorque = 350;
 	ReferenceMass = 0.65389388799667,
 }
 
@@ -54,7 +54,7 @@ RagdollLimit.SHOULDER_LIMITS = {
 	UpperAngle = 110,
 	TwistLowerAngle = -75,
 	TwistUpperAngle = 75,
-	FrictionTorque = 400,
+	FrictionTorque = 550,
 	ReferenceMass = 0.90918225049973,
 }
 
@@ -62,7 +62,7 @@ RagdollLimit.HIP_LIMITS = {
 	UpperAngle = 40,
 	TwistLowerAngle = -5,
 	TwistUpperAngle = 80,
-	FrictionTorque = 100,
+	FrictionTorque = 550,
 	ReferenceMass = 1.9175016880035,
 }
 

@@ -9,6 +9,7 @@ local ItemModules = {
     Gliders = require(Library.Gliders),
     Trails = require(Library.Trails)
 }
+local Items = require(Library.Items)
 
 local Knit = require(ReplicatedStorage.Packages.Knit)
 local Net = require(ReplicatedStorage.Packages.Net)
@@ -95,35 +96,50 @@ function ShopService:BuyItem(Player, ID, ItemType)
                     if success then
                         Coins.Value = DataTypeHandler:NumberToString(NumeralCoins - Cost)
                         local Item = self:EquipItem(Player, ID, ItemType)
-                        return Item
+                        return "Accessory", Item
                     else
                         return false
                     end
                 else
-                    print("Not enough coins")
+                    local CoinsNeeded = Cost - NumeralCoins
+                    local IDToReturn = 6
 
-                    return false
+                    if CoinsNeeded <= 100 then
+                        IDToReturn = 1
+                    elseif CoinsNeeded <= 500 then
+                        IDToReturn = 2
+                    elseif CoinsNeeded <= 2000 then
+                        IDToReturn = 3
+                    elseif CoinsNeeded <= 5000 then
+                        IDToReturn = 4
+                    elseif CoinsNeeded <= 10000 then
+                        IDToReturn = 5
+                    else
+                        IDToReturn = 6
+                    end
+                    print(CoinsNeeded)
+
+                    return "DevProduct", Items.Coins[IDToReturn]
                 end
             else
                 if MarketPlaceService:UserOwnsGamePassAsync(Player.UserId, ItemInfo.Gamepass) then
-                    print("ownsgamepass")
                     local success = DataService:AddItem(Player, ID, ItemType)
 
                     if success then
                         local Item = self:EquipItem(Player, ID, ItemType)
-                        return Item
+                        return "Accessory", Item
                     else
                         return false
                     end
                 else
                     print("Don't own gamepass")
 
-                    return false
+                    return "Gamepass", ItemInfo.Gamepass
                 end         
             end
         else
             local Item = self:EquipItem(Player, ID, ItemType)
-            return Item
+            return "Accessory", Item
         end
     end
 end
@@ -176,6 +192,8 @@ function ShopService.Client:EquipLastItem(Player, ItemType)
         local Character = Player.Character
         local Humanoid = Character:FindFirstChildOfClass("Humanoid")
         if Humanoid then
+            if not ItemModules[ItemType] and not ItemModules[LastItemData] then return end
+            
             local Item = ItemModules[ItemType][LastItemData].Accessory:Clone()
             Character:SetAttribute(SingularItem, LastItemData.Name)
 

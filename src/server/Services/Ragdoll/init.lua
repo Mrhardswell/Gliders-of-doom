@@ -32,6 +32,8 @@ local function removeGlider(Player)
         if Accessory:IsA("Accessory") then
             if CollectionService:HasTag(Accessory, "Glider") then
                 Accessory.Parent = workspace
+                task.wait(3)
+                Accessory:Destroy()
             end
         end
     end

@@ -1,3 +1,4 @@
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local CollectionService = game:GetService("CollectionService")
 local RunService = game:GetService("RunService")
@@ -8,6 +9,9 @@ local Knit = require(ReplicatedStorage.Packages.Knit)
 local Net = require(ReplicatedStorage.Packages.Net)
 
 local ActiveCheckpoint = Instance.new("ObjectValue")
+ActiveCheckpoint.Parent = Players.LocalPlayer
+ActiveCheckpoint.Name = "ActiveCheckpoint"
+
 local CurrentPosition = Instance.new("Vector3Value")
 
 local Nodes = CollectionService:GetTagged("Node")
