@@ -222,7 +222,7 @@ local function CharacterAdded(Character)
 
                     BodyGyro.CFrame = BodyGyro.CFrame:Lerp(CameraCF * GoalCF, deltaTime * 10)
 
-                    if not Character:GetAttribute("Boost") and not Character:GetAttribute("Tornado") then
+                    if not Character:GetAttribute("Boost") then
                         VectorForce.RelativeTo = Enum.ActuatorRelativeTo.Attachment0
 
                         local CameraAngle = CameraCF.LookVector.Y

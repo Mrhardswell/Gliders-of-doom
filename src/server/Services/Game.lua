@@ -117,6 +117,7 @@ end
 function Game:RegisterPlayer(Player)
     if not self.RegisteredPlayers[Player] then
         self.RegisteredPlayers[Player] = {}
+        
         local Character = Player.Character or Player.CharacterAdded:Wait()
         local Humanoid = Character:WaitForChild("Humanoid")
         local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
@@ -183,36 +184,41 @@ function Game:RegisterPlayer(Player)
 
             if Character.HumanoidRootPart.Position.Z < EndNode.Position.Z then
                 if Humanoid and Humanoid.Health > 0 then
-                    self.WinnerCount += 1
-
-                    if self.WinnerCount == 1 then
-                        DataService:Update(Player, "Spins", function(currentValue)
-                            return currentValue + 1
-                        end)
-                    end
-    
-                    DisplayWinner:FireAllClients(Player.Name, self.WinnerCount)
-    
                     local FastestTime = DataService:Get(Player, "FastestTime")
                     local CompletedTime = MatchTime - TimeLeft.Value
                     local MinimumTime = LeaderboardData.FastestTime.MinimumTime
+
+                    if CompletedTime < MinimumTime then
+                        Character:PivotTo(workspace.Maps.Lobby.Props.SpawnLocation.CFrame + Vector3.new(0, 5, 0))
+                        Reset:FireClient(Player) 
+                        warn("Completed lap too fast!")
+                        return 
+                    end
+
+                    self.WinnerCount += 1
+
+                    if self.WinnerCount == 1 then
+                        Player.Data.WheelSpins.Value += 1
+                    end
     
+                    DisplayWinner:FireAllClients(Player.Name, self.WinnerCount)
+                    
                     if CompletedTime < FastestTime then
-                        if CompletedTime >= MinimumTime then
-                            DataService:Set(Player, "FastestTime", CompletedTime)
-                        else
-                            warn("Completed lap too fast!")
-                        end
+                        DataService:Set(Player, "FastestTime", CompletedTime)
                     end
                     
-                    Character:PivotTo(workspace.SpawnLocation.CFrame + Vector3.new(0, 5, 0))
-                    Reset:FireClient(Player)
-    
                     local leaderstats = Player:FindFirstChild("leaderstats")
                     local Wins = leaderstats:FindFirstChild("Wins")
+
                     if not Wins then return end
+
                     local CurrentWins = DataTypeHandler:StringToNumber(Wins.Value)
                     Wins.Value = DataTypeHandler:NumberToString(CurrentWins + 1)
+
+                    Character:PivotTo(workspace.Maps.Lobby.Props.SpawnLocation.CFrame + Vector3.new(0, 5, 0))
+                    Reset:FireClient(Player)
+                else
+                    Reset:FireClient(Player)
                 end
             end
         end
@@ -246,7 +252,9 @@ function Game:RemovePlayer(Player)
             ["Wins"] = DataService:GetTableKey(Player, "leaderstats", "Wins")
         }
 
-        for _, leaderboard in workspace:WaitForChild("Leaderboards"):GetChildren() do
+        local leaderboards = CollectionService:GetTagged("Leaderboard")
+        
+        for _, leaderboard in leaderboards do            
             local datastore = DataStoreService:GetOrderedDataStore(leaderboard.Name)
             local dataToSetTo = math.abs(tonumber(data[leaderboard.Name])) 
             local leaderboardData = LeaderboardData[leaderboard.Name]

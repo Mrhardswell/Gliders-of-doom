@@ -81,9 +81,7 @@ function Merchants.Client:ClaimReward(Player, Reward)
         elseif Reward == "VIP" then
             Reward.Value = DataTypeHandler:AdaptiveNumberFormat(CoinsNumber + 4000, 4)
             
-            self.Server.DataService:Update(Player, "Spins", function(currentValue)
-                return currentValue + 1
-            end)
+            Player.Data.WheelSpins.Value += 1
         end
     end
 end

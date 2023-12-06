@@ -26,7 +26,10 @@ function Leaderboard:Construct()
     self.Title = self.LeaderboardGui.Title
     self.UIGradient = self.Title.UIGradient
     self.EntryTemplate = self.EntryHolder.EntryTemplate
+    self.RankTags = self.Leaderboard.Parent.RankTags
+    self.RankPositions = self.Leaderboard.RankPositions
     self.OrderedDataStore = DataStoreService:GetOrderedDataStore(self.Leaderboard.Name)
+    self.RankedCharacters = self.Leaderboard.RankedCharacters
     self.Tween = TweenService:Create(self.UIGradient, tweenInfo, {Offset = Vector2.new(-0.3,0)})
 
     self.Title.Text = LeaderboardData[self.Leaderboard.Name].Title
@@ -41,12 +44,7 @@ function Leaderboard.Start(self)
     end
 end
 
-function Leaderboard:Update()
-    local ascending = LeaderboardData[self.Leaderboard.Name].Ascending
-	local pageSize = 25
-	local pages = self.OrderedDataStore:GetSortedAsync(ascending, pageSize)
-	local currentPage = pages:GetCurrentPage()
-
+function Leaderboard:Cleanup()
     for _, entry in self.EntryHolder:GetChildren() do
         if entry.ClassName ~= "Frame" then continue end
         if entry.Name == "EntryTemplate" then continue end
@@ -54,23 +52,47 @@ function Leaderboard:Update()
         entry:Destroy()
     end
 
+    for _, character in self.RankedCharacters:GetChildren() do
+        character:Destroy()
+    end
+end
+
+function Leaderboard:Update()
+    local ascending = LeaderboardData[self.Leaderboard.Name].Ascending
+	local pageSize = 25
+	local pages = self.OrderedDataStore:GetSortedAsync(ascending, pageSize)
+	local currentPage = pages:GetCurrentPage()
+
+    self:Cleanup()
+
 	for rank, data in currentPage do
 		local name = data.key
+        local userId = Players:GetUserIdFromNameAsync(name)
 		local data = data.value
-        local isDisplayed = false
 
-        for _, entry in self.EntryHolder:GetChildren()  do
-            if entry.ClassName ~= "Frame" then continue end
-            if entry.Name == "EntryTemplate" then continue end
-
-            if entry.Name == name then
-                isDisplayed = true
-            end
+        if rank >= 1 and rank <= 3 then
+            local humanoidDescription = Players:GetHumanoidDescriptionFromUserId(userId)
+            local character = Players:CreateHumanoidModelFromDescription(humanoidDescription, Enum.HumanoidRigType.R15)
+            local rankTag = self.RankTags[rank]
+            local rankPosition = self.RankPositions[rank]
+            local heightScale = humanoidDescription.HeightScale
+            local typeScale = humanoidDescription.BodyTypeScale
+            local proportionScale = humanoidDescription.ProportionScale
+            local heightAdjustment = (heightScale*(4 + typeScale*(math.pi/2 - 0.6*proportionScale)) + 1) - 5.1
+            
+            character.Humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+            character.Name = name
+            character.Parent = self.RankedCharacters
+            character.HumanoidRootPart.Anchored = true
+            character:PivotTo(rankPosition.CFrame * rankPosition.Spawn.CFrame * CFrame.new(0, heightAdjustment, 0))
+            
+            rankTag = rankTag:Clone()
+            rankTag.Parent = character
+            rankTag.Adornee = character.Head 
         end
 
-        if data and not isDisplayed then
+        if data then
             local entryTemplate = self.EntryTemplate:Clone()
-            local userId = Players:GetUserIdFromNameAsync(name)
 
             if userId then
                 local thumbnailIcon = Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)

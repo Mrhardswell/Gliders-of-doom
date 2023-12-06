@@ -1,11 +1,11 @@
 local CollectionService = game:GetService("CollectionService")
+local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local SoundService = game:GetService("SoundService")
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 
 local Knit = require(ReplicatedStorage.Packages.Knit)
-local Rings = require(script.Rings)
 
 local GliderController
 local CharacterController
@@ -13,18 +13,20 @@ local CharacterController
 local Player = Players.LocalPlayer
 local SFX = SoundService.SFX
 
-local Boost = Knit.Component.new {
-    Tag = "Boost";
+local Fan = Knit.Component.new {
+    Tag = "Fan";
 }
 
-function Boost:Construct()
-    self.Pad = self.Instance
-    self.Mesh = self.Pad:FindFirstChildWhichIsA("MeshPart")
+local BoostTime = 1
 
-    if self.Mesh then
-        self.OriginalSize = self.Mesh.Size
-        self.MeshTween = TweenService:Create(self.Mesh, Rings.TweenInfo, {Size = self.OriginalSize * 1.5, Transparency = 1})
-    end
+function Fan:Construct()
+    self.Fan = self.Instance
+    self.Hitbox = self.Fan:WaitForChild("Hitbox")
+    self.Propeller = self.Fan:WaitForChild("Propeller")
+    self.FanSound = SFX.Fan:Clone()
+
+    self.FanSound.Parent = self.Hitbox
+    self.FanSound:Play()
 end
 
 local function getMass(Model)
@@ -37,9 +39,26 @@ local function getMass(Model)
     return Mass
 end
 
-local LastBoost = nil
+function Fan:Spin()
+    self.Propeller:GetAttributeChangedSignal("Active"):Connect(function()
+        if self.Propeller:GetAttribute("Active") then
 
-function Boost.Start(self)
+            if self.Connection then
+                self.Connection:Disconnect()
+            end
+
+            self.Connection = RunService.RenderStepped:Connect(function(deltaTime)
+                self.Propeller.CFrame = self.Propeller.CFrame * CFrame.Angles(0, 0, 2 * deltaTime)
+            end)
+        else
+            self.Connection:Disconnect()
+        end
+    end)
+
+    self.Propeller:SetAttribute("Active", true)
+end
+
+function Fan.Start(self)
     repeat task.wait() until Knit.FullyStarted
 
     if not GliderController then
@@ -50,7 +69,8 @@ function Boost.Start(self)
         CharacterController = Knit.GetController("CharacterController")
     end
 
-    self.Pad.Touched:Connect(function(Hit)
+    self.Hitbox.Touched:Connect(function(Hit)
+        print("touch")
         local Root = Hit.Parent:FindFirstChild("HumanoidRootPart")
         local Humanoid = Hit.Parent:FindFirstChild("Humanoid")
         
@@ -78,6 +98,9 @@ function Boost.Start(self)
         local VectorForce = Boost:FindFirstChild("VectorForce")
         if not VectorForce then print("Boost has no vector force") return end
 
+        local BodyThrust = Root:WaitForChild("BodyThrust")
+        if not BodyThrust then print("Root has no body thrust") return end
+
         local isPlayer = Players:GetPlayerFromCharacter(Hit.Parent)
         if isPlayer then
             if isPlayer ~= Player then
@@ -85,41 +108,42 @@ function Boost.Start(self)
             end
         end
 
-        local PushPower = self.Pad:GetAttribute("PushPower")
-        local PushDirection = self.Pad:GetAttribute("PushDirection")
-        local CurrentMass = getMass(Hit.Parent)
+        local PushPower = self.Fan:GetAttribute("PushPower")
+        local LookVectorAxis = self.Fan:GetAttribute("Axis")
+
+        if Root:GetAttribute("Boost") then return end
 
         if not Root:GetAttribute("Boost") then
             Root:SetAttribute("Boost", true)
-            CharacterController:PlayAnimation("Boost")
         end
 
-        Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
         VectorForce.RelativeTo = Enum.ActuatorRelativeTo.World
-
         local CurrentForce = VectorForce.Force
-        local TargetForce = Vector3.new(0, PushPower + CurrentMass * PushDirection.Y, -math.abs(PushPower + CurrentMass * PushDirection.Z))
-        local Tween = TweenService:Create(VectorForce, TweenInfo.new(.2, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Force = TargetForce + CurrentForce})
+        local TargetForce
 
-        if self.Mesh then
-            self.MeshTween:Play()
-            self.Mesh.Color = Rings.Used
-            task.delay(0.3,function()
-                self.Mesh.Color = Rings.Normal
-            end)
+        local Total = PushPower + getMass(Hit.Parent) * self.Hitbox.CFrame.LookVector.Y
+
+        if LookVectorAxis == "X" then
+            TargetForce = Vector3.new(0, 0, math.abs(Total))
+        elseif LookVectorAxis == "Y" then
+            TargetForce = Vector3.new(0, Total, 0)
+        elseif LookVectorAxis == "Z" then
+            TargetForce = Vector3.new(Total, 0, 0)
         end
 
         Character:SetAttribute("AcumulatedForce", TargetForce.Z)
 
-        SFX.Boost:Play()
+        BodyThrust.Force = TargetForce
 
-        Tween:Play()
-        Tween.Completed:Wait()
-        Tween:Destroy()
+        task.wait(BoostTime)
+
+        BodyThrust.Force = Vector3.new(0, 0, 0)
 
         Root:SetAttribute("Boost", false)
-
     end)
+
+    self:Spin()
+
 end
 
-return Boost
+return Fan
