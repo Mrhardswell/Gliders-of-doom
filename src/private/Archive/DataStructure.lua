@@ -28,7 +28,7 @@ DataStructure = {
 
     History = {},
 
-    FastestTime = 480,
+    RecordTime = 480,
 
 }
 

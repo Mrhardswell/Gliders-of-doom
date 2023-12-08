@@ -192,8 +192,8 @@ function ShopService.Client:EquipLastItem(Player, ItemType)
         local Character = Player.Character
         local Humanoid = Character:FindFirstChildOfClass("Humanoid")
         if Humanoid then
-            if not ItemModules[ItemType] and not ItemModules[LastItemData] then return end
-            
+            if not ItemModules[ItemType] or not ItemModules[ItemType][LastItemData] then return end
+
             local Item = ItemModules[ItemType][LastItemData].Accessory:Clone()
             Character:SetAttribute(SingularItem, LastItemData.Name)
 
@@ -206,7 +206,7 @@ function ShopService.Client:EquipLastItem(Player, ItemType)
             end
 
             if ItemType == "Trails" then
-                Item.Handle.Transparency = 1    
+                Item.Handle.Transparency = 1
             end
 
             Humanoid:AddAccessory(Item)

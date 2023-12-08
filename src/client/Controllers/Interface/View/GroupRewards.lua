@@ -118,9 +118,8 @@ function GroupRewards.new(ScreenGui, Interface)
             self.Tweens.Unhovered:Play()
         end
     end)
-
-     -- Exit Events
-     self.Exit.MouseButton1Click:Connect(function()
+    -- Exit Events
+    self.Exit.MouseButton1Click:Connect(function()
         self.Tweens.Exit.Pressed:Play()
         Interface:CloseUI(ScreenGui.Name)
         self.Tweens.Exit.Pressed.Completed:Wait()

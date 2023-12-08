@@ -184,7 +184,7 @@ function Store.new(ScreenGui, Interface)
 
                     ViewportFrame.CurrentCamera = Camera
 
-                    BuyButton:SetAttribute("TargetId", ItemId)
+                    BuyButton:SetAttribute("ProductId", ItemId)
 
                     RegistedProducts[ItemId] = BuyButton
 
@@ -276,11 +276,13 @@ function Store.new(ScreenGui, Interface)
 
                 local BuyButton = ItemTemplate.Buy
                 local TargetId = TargetType.TargetId
+                local ProductId = TargetType.ProductId
                 local Owned
 
+                BuyButton:SetAttribute("ProductId", ProductId)
                 BuyButton:SetAttribute("TargetId", TargetId)
 
-                RegistedProducts[TargetId] = BuyButton
+                RegistedProducts[ProductId] = BuyButton
 
                 if Button.Name == "Featured" then
                     Owned = MarketPlaceService:UserOwnsGamePassAsync(Player.UserId, TargetId)
@@ -329,7 +331,7 @@ function Store.new(ScreenGui, Interface)
                     if Button.Name == "Featured" then
                         MarketPlaceService:PromptGamePassPurchase(Player, TargetType.TargetId)
                     elseif Button.Name == "Coins" then
-                        MarketPlaceService:PromptProductPurchase(Player, TargetId)
+                        MarketPlaceService:PromptProductPurchase(Player, ProductId)
                     end
                     Tweens.Pressed.Completed:Wait()
                     if BuyButton:GetAttribute("Hovered") then
@@ -455,17 +457,17 @@ function Store.new(ScreenGui, Interface)
     return self
 end
 
-MarketPlaceService.PromptGamePassPurchaseFinished:Connect(function(Player, TargetId, PurchaseSuccess)
+MarketPlaceService.PromptGamePassPurchaseFinished:Connect(function(Player, ProductId, PurchaseSuccess)
     if PurchaseSuccess then
-        print("Gamepass Purchase Success", TargetId)
-        local isProduct = RegistedProducts[TargetId]
+        print("Gamepass Purchase Success", ProductId)
+        local isProduct = RegistedProducts[ProductId]
 
         if isProduct then
-            print("Product is now owned", TargetId)
-            RegistedProducts[TargetId].Main.Label.Text = "Owned"
+            print("Product is now owned", ProductId)
+            RegistedProducts[ProductId].Main.Label.Text = "Owned"
         end
     else
-        print("Gamepass Purchase Failed", TargetId)
+        print("Gamepass Purchase Failed", ProductId)
     end
 end)
 

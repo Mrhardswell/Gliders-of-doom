@@ -19,6 +19,7 @@ local Tween_Infos = {
     Hovered = TweenInfo.new(0.15, Enum.EasingStyle.Sine , Enum.EasingDirection.Out),
     Unhovered = TweenInfo.new(0.15, Enum.EasingStyle.Bounce , Enum.EasingDirection.Out),
     PopUp = TweenInfo.new(.2, Enum.EasingStyle.Sine , Enum.EasingDirection.Out, 0, true),
+    UGCText = TweenInfo.new(1.5, Enum.EasingStyle.Linear, Enum.EasingDirection.Out, -1, true)
 }
 
 local function HandleButton(Button, Interface)
@@ -125,6 +126,21 @@ local function HandleGliderShowcase(GliderShowcase, Interface)
         end
     end)
 end 
+
+local function AnimateUGCText(UGCText)
+    local ugcTextTween = TweenService:Create(UGCText, Tween_Infos.UGCText, {Rotation = 20})
+    ugcTextTween:Play()
+end
+
+local function AnimateSpinIcon(SpinIcon)
+    task.spawn(function()
+        while SpinIcon do
+            SpinIcon.Rotation += 1
+            task.wait()
+        end
+    end)
+end
+
 function Hud.new(ScreenGui, Interface)
     local self = {}
 
@@ -136,10 +152,13 @@ function Hud.new(ScreenGui, Interface)
     self.SideButtons = ScreenGui:WaitForChild("SideButtons")
     self.Invite = ScreenGui:WaitForChild("Invite")
     self.GliderShowcase = ScreenGui:WaitForChild("GliderShowcase")
+    self.UGCText = ScreenGui:WaitForChild("UGCText")
     self.Gifts = ScreenGui:WaitForChild("Gifts")
     self.Bonuses = ScreenGui:WaitForChild("Bonuses")
 
     HandleGliderShowcase(self.GliderShowcase, Interface)
+
+    AnimateUGCText(self.UGCText)
 
     self.BuyButtons = {
         Coins = self.ValueDisplays.Coins.Buy,
@@ -148,6 +167,10 @@ function Hud.new(ScreenGui, Interface)
     for _, Button in self.SideButtons:GetChildren() do
         if Button:IsA("TextButton") or Button:IsA("ImageButton") then
             HandleButton(Button, Interface)
+
+            if Button.Name == "Spin" then
+                AnimateSpinIcon(Button.SpinIcon)
+            end
         end
     end
 

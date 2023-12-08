@@ -1,12 +1,12 @@
 local LeaderboardData = {
-    ["FastestTime"] = {
-        Title = "FASTEST TIMES",
+    ["RecordTime"] = {
+        Title = "RECORD TIMES",
         Ascending = true,
         Pages = 25,
         MinimumTime = 20,
     },
 
-    ["Wins"] = {
+    ["MostWins"] = {
         Title = "MOST WINS",
         Ascending = false,
         Pages = 25,

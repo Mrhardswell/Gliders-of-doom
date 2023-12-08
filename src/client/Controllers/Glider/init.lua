@@ -33,14 +33,14 @@ local Glider = Knit.CreateController {
 local Mobile = PlayerGui:WaitForChild("Mobile")
 local MobileControls = Mobile.Main.Controls
 
-local MaxForce = 10000
+local MaxForce = 500
 local BaseThrottle = -300
 local thrustMagnitude = 200
 
 local UPWARD_ANGLE_THRESHOLD = 0.2
 local UPWARD_SPEED_FACTOR = 0.8 -- The higher the value, the faster the player will go up
-local DOWNWARD_SPEED_FACTOR = 0.6 -- The higher the value, the faster the player will fall
-local DRAG_COEFFICIENT = 1
+local DOWNWARD_SPEED_FACTOR = 1
+local DRAG_COEFFICIENT = 1 
 local MAX_FORCE = 1600 -- In Newtons
 
 local AirDensity = 1.225 -- In kg/m^3
@@ -188,36 +188,53 @@ local function CharacterAdded(Character)
                         Climb = Gamepad1:IsButtonDown(Enum.KeyCode.ButtonA)
                         Dive = Gamepad1:IsButtonDown(Enum.KeyCode.ButtonB)
                     end
-
+                    
                     -- States
                     if Forward then
                         GoalCF = GoalCF * CFrame.Angles(math.rad(-5), 0, 0)
-                        BodyThrust.Force = CameraCF.LookVector * thrustMagnitude * Root.Velocity.Magnitude / 10
+                        if not Root:GetAttribute("Boost") then
+                            BodyThrust.Force = CameraCF.LookVector * thrustMagnitude * Root.Velocity.Magnitude /2
+                        end
+
                     end
                     
                     if Backward then
-                        GoalCF = GoalCF * CFrame.Angles(math.rad(60), 0, 0)
-                        BodyThrust.Force = -CameraCF.LookVector * thrustMagnitude * Root.Velocity.Magnitude / 10
+                        GoalCF = GoalCF * CFrame.Angles(math.rad(30), 0, 0)
+                        if not Root:GetAttribute("Boost") then
+                            BodyThrust.Force = -CameraCF.LookVector * thrustMagnitude * Root.Velocity.Magnitude
+                        end
                     end
 
                     if Climb then
                         GoalCF = GoalCF * CFrame.Angles(math.rad(40), 0, 0)
-                        BodyThrust.Force = CameraCF.UpVector * thrustMagnitude * Root.Velocity.Magnitude / 10
+                        if not Root:GetAttribute("Boost") then
+                            BodyThrust.Force = CameraCF.UpVector * thrustMagnitude * Root.Velocity.Magnitude /2
+                        end
                     end
 
                     if Dive then
                         GoalCF = GoalCF * CFrame.Angles(math.rad(-40), 0, 0)
-                        BodyThrust.Force = -CameraCF.UpVector * thrustMagnitude * Root.Velocity.Magnitude / 10
+                        if not Root:GetAttribute("Boost") then
+                            BodyThrust.Force = -CameraCF.UpVector * thrustMagnitude * Root.Velocity.Magnitude /2
+                        end
                     end
 
                     if Right then
                         GoalCF = GoalCF * CFrame.Angles(0, math.rad(-40), math.rad(-30))
-                        BodyThrust.Force = CameraCF.RightVector * thrustMagnitude * Root.Velocity.Magnitude / 5
+                        if not Root:GetAttribute("Boost") then
+                            BodyThrust.Force = CameraCF.RightVector * thrustMagnitude * Root.Velocity.Magnitude
+                        end
                     end
 
                     if Left then
                         GoalCF = GoalCF * CFrame.Angles(0, math.rad(40), math.rad(30))
-                        BodyThrust.Force = -CameraCF.RightVector * thrustMagnitude * Root.Velocity.Magnitude / 5
+                        if not Root:GetAttribute("Boost") then
+                            BodyThrust.Force = -CameraCF.RightVector * thrustMagnitude * Root.Velocity.Magnitude
+                        end
+                    end
+
+                    if not Forward and not Backward and not Climb and not Dive and not Right and not Left then
+                        BodyThrust.Force = Vector3.new(0, 0, 0)
                     end
 
                     BodyGyro.CFrame = BodyGyro.CFrame:Lerp(CameraCF * GoalCF, deltaTime * 10)
@@ -244,8 +261,8 @@ local function CharacterAdded(Character)
                         local DragForceMagnitude = DRAG_COEFFICIENT * AirDensity * Velocity^2
                         local DragForce = Vector3.new(0, 0, -DragForceMagnitude)
 
-                        local Force = Vector3.new(0, Weight, -math.abs(Root.Velocity.Z + AcumulatedForce))
-                        local TotalForce = Force + Vector3.new(0, math.abs(Root.Velocity.Y) + Weight, -math.abs(Root.Velocity.Z/2)) + DragForce
+                        local Force = Vector3.new(0, Weight, Root.Velocity.Z + AcumulatedForce)
+                        local TotalForce = Force + Vector3.new(0, math.abs(Root.Velocity.Y) + Weight, Root.Velocity.Z/5) + DragForce
                         local maintainYForce = calculateMaintainYForce(Character)
 
                         TotalForce = TotalForce + Vector3.new(0, maintainYForce/2, 0)

@@ -293,6 +293,15 @@ function DataService:Set(Player, Key, Value)
 		end
 	end
 end
+
+function DataService:WipeKey(Player, Key)
+	local PlayerData = GetData(Player)
+
+	if PlayerData.Data[Key] then
+		PlayerData.Data[Key] = nil
+	end
+end
+
 function DataService:Update(Player, Key, Callback)
 	local PlayerData = GetData(Player)
 	repeat task.wait() until PlayerData

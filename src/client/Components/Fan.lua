@@ -98,8 +98,8 @@ function Fan.Start(self)
         local VectorForce = Boost:FindFirstChild("VectorForce")
         if not VectorForce then print("Boost has no vector force") return end
 
-        local BodyThrust = Root:WaitForChild("BodyThrust")
-        if not BodyThrust then print("Root has no body thrust") return end
+        local BodyThrust = Root:FindFirstChild("BodyThrust")
+        if not BodyThrust then BodyThrust = Instance.new("BodyThrust") BodyThrust.Parent = Root end
 
         local isPlayer = Players:GetPlayerFromCharacter(Hit.Parent)
         if isPlayer then
@@ -109,7 +109,6 @@ function Fan.Start(self)
         end
 
         local PushPower = self.Fan:GetAttribute("PushPower")
-        local LookVectorAxis = self.Fan:GetAttribute("Axis")
 
         if Root:GetAttribute("Boost") then return end
 
@@ -118,20 +117,11 @@ function Fan.Start(self)
         end
 
         VectorForce.RelativeTo = Enum.ActuatorRelativeTo.World
-        local CurrentForce = VectorForce.Force
-        local TargetForce
+        local TargetForce = Vector3.new(0, 0, 0)
 
         local Total = PushPower + getMass(Hit.Parent) * self.Hitbox.CFrame.LookVector.Y
 
-        if LookVectorAxis == "X" then
-            TargetForce = Vector3.new(0, 0, math.abs(Total))
-        elseif LookVectorAxis == "Y" then
-            TargetForce = Vector3.new(0, Total, 0)
-        elseif LookVectorAxis == "Z" then
-            TargetForce = Vector3.new(Total, 0, 0)
-        end
-
-        Character:SetAttribute("AcumulatedForce", TargetForce.Z)
+        TargetForce = Vector3.new(0, Total, 0)
 
         BodyThrust.Force = TargetForce
 

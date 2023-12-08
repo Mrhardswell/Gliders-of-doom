@@ -1,5 +1,6 @@
 local DataStoreService = game:GetService("DataStoreService")
 local ServerScriptService = game:GetService("ServerScriptService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
 
@@ -31,6 +32,8 @@ function Leaderboard:Construct()
     self.OrderedDataStore = DataStoreService:GetOrderedDataStore(self.Leaderboard.Name)
     self.RankedCharacters = self.Leaderboard.RankedCharacters
     self.Tween = TweenService:Create(self.UIGradient, tweenInfo, {Offset = Vector2.new(-0.3,0)})
+    self.DanceAnimations = self.Leaderboard.DanceAnimations
+    self.LoadedAnimations = {}
 
     self.Title.Text = LeaderboardData[self.Leaderboard.Name].Title
 end
@@ -55,6 +58,8 @@ function Leaderboard:Cleanup()
     for _, character in self.RankedCharacters:GetChildren() do
         character:Destroy()
     end
+
+    self.LoadedAnimations = {}
 end
 
 function Leaderboard:Update()
@@ -62,15 +67,31 @@ function Leaderboard:Update()
 	local pageSize = 25
 	local pages = self.OrderedDataStore:GetSortedAsync(ascending, pageSize)
 	local currentPage = pages:GetCurrentPage()
+    local lowestValue
 
     self:Cleanup()
 
+    self.Leaderboard:SetAttribute("FinishedLoading", false)
+
 	for rank, data in currentPage do
-		local name = data.key
-        local userId = Players:GetUserIdFromNameAsync(name)
+        local userId = data.key
+        local name = Players:GetNameFromUserIdAsync(userId)
 		local data = data.value
+        lowestValue = data
 
         if rank >= 1 and rank <= 3 then
+            local animationToLoad 
+
+            while animationToLoad == nil do
+                local randomNumber = math.random(1, #self.DanceAnimations:GetChildren())
+                local randomAnimation = self.DanceAnimations:GetChildren()[randomNumber]
+
+                if self.LoadedAnimations[randomNumber] then continue end
+
+                animationToLoad = randomAnimation
+                self.LoadedAnimations[randomNumber] = true
+            end
+
             local humanoidDescription = Players:GetHumanoidDescriptionFromUserId(userId)
             local character = Players:CreateHumanoidModelFromDescription(humanoidDescription, Enum.HumanoidRigType.R15)
             local rankTag = self.RankTags[rank]
@@ -80,15 +101,19 @@ function Leaderboard:Update()
             local proportionScale = humanoidDescription.ProportionScale
             local heightAdjustment = (heightScale*(4 + typeScale*(math.pi/2 - 0.6*proportionScale)) + 1) - 5.1
             
-            character.Humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
-            character.Name = name
-            character.Parent = self.RankedCharacters
-            character.HumanoidRootPart.Anchored = true
-            character:PivotTo(rankPosition.CFrame * rankPosition.Spawn.CFrame * CFrame.new(0, heightAdjustment, 0))
-            
             rankTag = rankTag:Clone()
             rankTag.Parent = character
             rankTag.Adornee = character.Head 
+
+            character.Humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+            character.Name = name
+            character.HumanoidRootPart.Anchored = true
+            character:PivotTo(rankPosition.CFrame * rankPosition.Spawn.CFrame * CFrame.new(0, heightAdjustment, 0))
+            character.Parent = self.RankedCharacters
+            print(animationToLoad.ClassName)
+
+            local animation = character:WaitForChild("Humanoid").Animator:LoadAnimation(animationToLoad)
+            animation:Play()
         end
 
         if data then
@@ -106,12 +131,12 @@ function Leaderboard:Update()
                 rankColor = rankColors[tostring(rank)]
             end
 
-            if self.Leaderboard.Name == "FastestTime" then
+            if self.Leaderboard.Name == "RecordTime" then
                 local minutes = math.floor((data % 3600) / 60)
                 local seconds = data % 60
 
                 dataToSetTo = string.format("%02dm:%02ds", minutes, seconds)
-            elseif self.Leaderboard.Name == "Wins" then
+            elseif self.Leaderboard.Name == "MostWins" then
                 dataToSetTo = data.." Wins"
             end
 
@@ -126,6 +151,9 @@ function Leaderboard:Update()
             entryTemplate.Visible = true
         end
 	end
+
+    self.Leaderboard:SetAttribute("LowestValue", lowestValue)
+    self.Leaderboard:SetAttribute("FinishedLoading", true)
 end
 
 return Leaderboard

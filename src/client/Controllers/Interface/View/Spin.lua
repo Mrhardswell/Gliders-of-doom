@@ -53,7 +53,14 @@ function Spin.new(ScreenGui, Interface)
     end
 
     Player.SpinTime:GetPropertyChangedSignal("Value"):Connect(function()
-        self.Buttons.Spin1.NextSpin.Text = "+1 Spin In "..Player.SpinTime.Value.."."
+        local IsInGroup =  Player:IsInGroup(33193007)
+
+        if IsInGroup then
+            SpinAmount = 3
+        else
+            SpinAmount = 1
+        end
+        self.Buttons.Spin1.NextSpin.Text = "+"..SpinAmount.." Spins In "..Player.SpinTime.Value.."."
     end)
     
     self.WheelService:GetPrizes():andThen(function(Prizes)
