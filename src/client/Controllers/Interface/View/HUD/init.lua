@@ -104,25 +104,25 @@ local function HandleGliderShowcase(GliderShowcase, Interface)
     
     GliderShowcase.MouseButton1Click:Connect(function()
         MarketplaceService:PromptGamePassPurchase(Player,  652764638)
-    end)
-
-    task.spawn(function()
-        while true do
-            GliderShowcase.Sunburst.Rotation += 1
-            task.wait()
-        end
-    end)
+    end) 
 
     task.spawn(function()
         while true do
             local secondsLeft = UpdateCountdownDisplay(GliderShowcase.Timer)
 
             if secondsLeft <= 0 then
-                GliderShowcase:Destroy()
-
+                GliderShowcase.Visible = false
                 return
-            end 
+            end
+
             task.wait(1)
+        end
+    end)
+
+    task.spawn(function()
+        while true do
+            GliderShowcase.Sunburst.Rotation += 1
+            task.wait()
         end
     end)
 end 

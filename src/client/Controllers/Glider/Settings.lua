@@ -1,0 +1,9 @@
+local Settings = {
+    UPWARD_ANGLE_THRESHOLD = 0.25,
+    UPWARD_SPEED_FACTOR = 0.8,
+    DOWNWARD_SPEED_FACTOR = 1.2,
+    DRAG_COEFFICIENT = .3,
+    MAX_FORCE = 1600,
+}
+
+return Settings

@@ -110,7 +110,6 @@ function Leaderboard:Update()
             character.HumanoidRootPart.Anchored = true
             character:PivotTo(rankPosition.CFrame * rankPosition.Spawn.CFrame * CFrame.new(0, heightAdjustment, 0))
             character.Parent = self.RankedCharacters
-            print(animationToLoad.ClassName)
 
             local animation = character:WaitForChild("Humanoid").Animator:LoadAnimation(animationToLoad)
             animation:Play()

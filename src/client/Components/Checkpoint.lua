@@ -73,28 +73,17 @@ local function TrackCharacter(Character : Model)
 
     Humanoid.Died:Connect(function()
         if Connection then Connection:Disconnect() end
-        task.wait(2)
-        GameService:Respawn(ActiveCheckpoint.Value):andThen(function()
-            local Character = Player.Character or Player.CharacterAdded:Wait()
-            if not ActiveCheckpoint.Value then return
-            elseif ActiveCheckpoint.Value == nil then return end
-            local isBase = ActiveCheckpoint.Value:FindFirstChild("Base")
-            if not isBase then return end
-            Character:PivotTo(CFrame.new(ActiveCheckpoint.Value.Base.Position))
-        end)
+        task.wait(3)
+        Character:Destroy()
+        GameService:Respawn(ActiveCheckpoint.Value)
     end)
 
     ActiveCheckpoint.Changed:Connect(function()
         if not ActiveCheckpoint.Value then return end
         if PreviouslyUnlocked[ActiveCheckpoint.Value] then return end
         PreviouslyUnlocked[ActiveCheckpoint.Value] = true
-
-        local Active = ActiveCheckpoint.Value
+        
         SoundService.SFX.Checkpoint:Play()
-
-        GameService:CheckpointReached():andThen(function(_RewardAmount)
-            RewardAmount = _RewardAmount
-        end):await()
 
         StarterGui:SetCore("SendNotification", {
             Title = "Checkpoint";

@@ -11,7 +11,6 @@ local Component = require(ReplicatedStorage.Packages.Component)
 local DataTypeHandler = require(ReplicatedStorage.Shared.Modules.DataTypeHandler)
 
 local Player = Players.LocalPlayer
-local SFX = SoundService.SFX
 
 local CreateCoins = Net:RemoteEvent("CreateCoins")
 
@@ -23,36 +22,29 @@ function CoinRing:Construct()
     self.Model = self.Instance
     self.Hitbox = self.Instance.PrimaryPart
     self.Ring = self.Model.Ring
-    self.CoinAmount = 1000
-    print("Constructed")
+    self.CoinAmount = 50
+    self.PlayerCooldowns = {}
 end
 
 function CoinRing.Start(self)
-    print("Started")
-    local debounce = false
-
     self.Hitbox.Touched:Connect(function(Hit)
-        if not debounce then
-            print("touched")
-            local humanoid = Hit.Parent:FindFirstChild("Humanoid")
-            if not humanoid then return end
-    
-            debounce = true
+        local humanoid = Hit.Parent:FindFirstChild("Humanoid")
 
-            local character = Hit.Parent
-            local player = Players:GetPlayerFromCharacter(character)
-    
-            local coins = player.leaderstats:WaitForChild("Coins")
-            local coinsValue = DataTypeHandler:StringToNumber(coins.Value)
-            local totalCoins = coinsValue + self.CoinAmount
-            coins.Value = DataTypeHandler:AdaptiveNumberFormat(totalCoins, 2)
-            CreateCoins:FireClient(player, self.Model)
-            
-            SFX.CoinRing:Play()
+        if not humanoid then return end
+        if humanoid.Health <= 0 then return end
+        
+        local character = Hit.Parent
+        local player = Players:GetPlayerFromCharacter(character)
 
-            task.wait(5)
-            debounce = false
-        end
+        if self.PlayerCooldowns[player.Name] and os.time() - self.PlayerCooldowns[player.Name] < 30 then return end
+
+        self.PlayerCooldowns[player.Name] = os.time()
+
+        local coins = player.leaderstats:WaitForChild("Coins")
+        local coinsValue = DataTypeHandler:StringToNumber(coins.Value)
+        local totalCoins = coinsValue + self.CoinAmount
+        coins.Value = DataTypeHandler:AdaptiveNumberFormat(totalCoins, 2)
+        CreateCoins:FireClient(player, self.Model)
     end)
 end
 

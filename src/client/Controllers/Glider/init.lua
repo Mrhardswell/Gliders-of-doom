@@ -91,6 +91,14 @@ local function CharacterAdded(Character)
         local LastGlider = nil
         local LastTrail = nil
 
+        if humanoidRootPart:FindFirstChild("BodyGyro") then
+            humanoidRootPart.BodyGyro:Destroy()
+        end
+
+        if humanoidRootPart:FindFirstChild("BodyThrust") then
+            humanoidRootPart.BodyThrust:Destroy()
+        end
+
         local BodyGyro = Instance.new("BodyGyro")
         BodyGyro.MaxTorque = Vector3.new(0, 0, 0)
         BodyGyro.P = getMass(Character) * 10000
@@ -166,9 +174,10 @@ local function CharacterAdded(Character)
                     local CameraCF = Camera.CFrame
                     local GoalCF = CFrame.new()
 
-                    BodyGyro.MaxTorque = Vector3.new(math.huge, 5000, 5000)
                     thrustMagnitude = getMass(Character)
 
+                    BodyGyro.MaxTorque = Vector3.new(math.huge, 300, 500)
+                
                     -- Keyboard Inputs
                     local Forward = Keyboard:IsKeyDown(Enum.KeyCode.W) or Keyboard:IsKeyDown(Enum.KeyCode.Up) or MobileControls.Up:GetAttribute("Pressed")
                     local Right = Keyboard:IsKeyDown(Enum.KeyCode.D) or Keyboard:IsKeyDown(Enum.KeyCode.Right) or MobileControls.Right:GetAttribute("Pressed")
@@ -188,48 +197,42 @@ local function CharacterAdded(Character)
                         Climb = Gamepad1:IsButtonDown(Enum.KeyCode.ButtonA)
                         Dive = Gamepad1:IsButtonDown(Enum.KeyCode.ButtonB)
                     end
-                    
+
+                    local Modifier = thrustMagnitude * Root.Velocity.Magnitude / 2000
+
                     -- States
-                    if Forward then
+                    if Forward or Backward then
                         GoalCF = GoalCF * CFrame.Angles(math.rad(-5), 0, 0)
                         if not Root:GetAttribute("Boost") then
-                            BodyThrust.Force = CameraCF.LookVector * thrustMagnitude * Root.Velocity.Magnitude /2
-                        end
-
-                    end
-                    
-                    if Backward then
-                        GoalCF = GoalCF * CFrame.Angles(math.rad(30), 0, 0)
-                        if not Root:GetAttribute("Boost") then
-                            BodyThrust.Force = -CameraCF.LookVector * thrustMagnitude * Root.Velocity.Magnitude
+                            BodyThrust.Force = CameraCF.LookVector * Modifier
                         end
                     end
 
                     if Climb then
                         GoalCF = GoalCF * CFrame.Angles(math.rad(40), 0, 0)
                         if not Root:GetAttribute("Boost") then
-                            BodyThrust.Force = CameraCF.UpVector * thrustMagnitude * Root.Velocity.Magnitude /2
+                            BodyThrust.Force = CameraCF.UpVector * Modifier^5
                         end
                     end
 
                     if Dive then
                         GoalCF = GoalCF * CFrame.Angles(math.rad(-40), 0, 0)
                         if not Root:GetAttribute("Boost") then
-                            BodyThrust.Force = -CameraCF.UpVector * thrustMagnitude * Root.Velocity.Magnitude /2
+                            BodyThrust.Force = -CameraCF.UpVector * Modifier^5
                         end
                     end
 
                     if Right then
                         GoalCF = GoalCF * CFrame.Angles(0, math.rad(-40), math.rad(-30))
                         if not Root:GetAttribute("Boost") then
-                            BodyThrust.Force = CameraCF.RightVector * thrustMagnitude * Root.Velocity.Magnitude
+                            BodyThrust.Force = CameraCF.LookVector * Modifier^2
                         end
                     end
 
                     if Left then
                         GoalCF = GoalCF * CFrame.Angles(0, math.rad(40), math.rad(30))
                         if not Root:GetAttribute("Boost") then
-                            BodyThrust.Force = -CameraCF.RightVector * thrustMagnitude * Root.Velocity.Magnitude
+                            BodyThrust.Force = CameraCF.LookVector * Modifier^2
                         end
                     end
 
@@ -259,10 +262,10 @@ local function CharacterAdded(Character)
                         local Weight = Mass * workspace.Gravity
                         local Velocity = Character.HumanoidRootPart.Velocity.Magnitude
                         local DragForceMagnitude = DRAG_COEFFICIENT * AirDensity * Velocity^2
-                        local DragForce = Vector3.new(0, 0, -DragForceMagnitude)
+                        local DragForce = Vector3.new(0, 0, -math.clamp(DragForceMagnitude, 0, 2000))* 120
 
                         local Force = Vector3.new(0, Weight, Root.Velocity.Z + AcumulatedForce)
-                        local TotalForce = Force + Vector3.new(0, math.abs(Root.Velocity.Y) + Weight, Root.Velocity.Z/5) + DragForce
+                        local TotalForce = Force + Vector3.new(0, math.abs(Root.Velocity.Y) + Weight, 0) + DragForce / 20
                         local maintainYForce = calculateMaintainYForce(Character)
 
                         TotalForce = TotalForce + Vector3.new(0, maintainYForce/2, 0)
@@ -281,13 +284,9 @@ local function CharacterAdded(Character)
                             TotalForce = TotalForce.Unit * MAX_FORCE + Vector3.new(0, maintainYForce, BaseThrottle)
                         end
 
-                        if TotalForce.Magnitude > 200 then
-                            VectorForce.Force = TotalForce
-                        else
-                            VectorForce.Force = TotalForce * 0.75
-                        end
+                        VectorForce.Force = TotalForce
 
-                        Character:SetAttribute("AcumulatedForce", AcumulatedForce)
+                        Character:SetAttribute("AcumulatedForce", AcumulatedForce/1000)
 
                     end
                 else

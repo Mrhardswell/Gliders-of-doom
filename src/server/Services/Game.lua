@@ -19,17 +19,18 @@ local Net = require(ReplicatedStorage.Packages.Net)
 
 local LeaderboardData = require(ServerScriptService.Server.Services.Data.LeaderboardData)
 local DataTypeHandler = require(ReplicatedStorage.Shared.Modules.DataTypeHandler)
+
 local DataService
+local GenService
 
 local GameUpdate = Net:RemoteEvent("GameUpdate")
 local Reset = Net:RemoteEvent("Reset")
 local DisplayWinner = Net:RemoteEvent("DisplayWinner")
 local CreateCoins = Net:RemoteEvent("CreateCoins")
 
-local MatchTime = 480
+local MatchTime = 280
 local Current = 0
 local Interval = 1
-local RewardAmount = 10
 
 local TimeLeft = Instance.new("NumberValue")
 TimeLeft.Parent = ReplicatedStorage
@@ -49,16 +50,6 @@ local Game = Knit.CreateService {
 local Nodes = CollectionService:GetTagged("Node")
 local CurrentMatch = nil
 
-local function getMass(Model)
-    local Mass = 0
-    for i, Object in Model:GetDescendants() do
-        if Object:IsA("BasePart") or Object:IsA("MeshPart") then
-            Mass += Object:GetMass()
-        end
-    end
-    return Mass
-end
-
 local function disableCollisions(character)
     for _, bodyPart in character:GetDescendants() do
         if bodyPart:IsA("BasePart") or bodyPart:IsA("MeshPart") then
@@ -70,27 +61,29 @@ end
 function Game.Client:Respawn(Player, ActiveCheckpoint)
     Player:LoadCharacter()
     local Character = Player.Character or Player.CharacterAdded:Wait()
+    local Impact = game.SoundService.SFX.Impact:Clone()
+    Impact.Parent = Character.HumanoidRootPart
     if not ActiveCheckpoint then return end
     Character:PivotTo(CFrame.new(ActiveCheckpoint:GetPivot().Position + Vector3.new(0,5,0)))
 end
 
-function Game.Client:CheckpointReached(Player)
-    local leaderstats = Player:FindFirstChild("leaderstats")
-    if not leaderstats then return end
-
-    local Coins = leaderstats:FindFirstChild("Coins")
-    if not Coins then return end
-
-    local CurrentCoins = DataTypeHandler:StringToNumber(Coins.Value)
-    local HasDoubleCoin = Player.Bonuses:FindFirstChild("Coins")
-    Coins.Value = DataTypeHandler:NumberToString(CurrentCoins + RewardAmount * (HasDoubleCoin and 2 or 1))
-
-    return RewardAmount
-end
+local CurrentEndNode = Instance.new("ObjectValue", ReplicatedStorage)
 
 function Game:StartTimer()
     if CurrentMatch then CurrentMatch:Disconnect() end
     self.GameState.Value = "In Progress"
+
+    -- Generate The Map
+    GenService:GenerateMap()
+
+    local EndNode = CollectionService:GetTagged("Node")
+    for _, Node in EndNode do
+        if Node.Name == "End" then
+            if Node:GetAttribute("End") then
+                CurrentEndNode.Value = Node
+            end
+        end
+    end
 
     CurrentMatch = RunService.Heartbeat:Connect(function(delta)
         Current = Current + delta
@@ -104,6 +97,7 @@ function Game:StartTimer()
             end
         end
     end)
+
 end
 
 function Game:EndMatch()
@@ -146,23 +140,20 @@ function Game:RegisterPlayer(Player)
         PlayerIconClone.Size = UDim2.new(0, 35, 0, 35)
 
         local StartNode
-        local EndNode
 
         self.RegisteredPlayers[Player] = {
             PlayerIcon = PlayerIconClone,
             StartNode = StartNode,
-            EndNode = EndNode
+            EndNode = CurrentEndNode,
         }
 
         for _, Node in Nodes do
             if Node.Name == "Start" then
                 StartNode = Node
-            elseif Node.Name == "End" then
-                EndNode = Node
             end
         end
 
-        local Magnitude = (StartNode.Position - EndNode.Position).Magnitude
+        local Magnitude = (StartNode.Position - CurrentEndNode.Value.Position).Magnitude
 
         local function UpdateIcon()
             local RawDistance = StartNode.Position - HumanoidRootPart.Position
@@ -185,44 +176,43 @@ function Game:RegisterPlayer(Player)
             local isRootPart = isCharacter:FindFirstChild("HumanoidRootPart")
             if not isRootPart then return end
 
-            if Character.HumanoidRootPart.Position.Z < EndNode.Position.Z then
-                if Humanoid and Humanoid.Health > 0 then
-                    local RecordTime = DataService:Get(Player, "RecordTime")
-                    local CompletedTime = MatchTime - TimeLeft.Value
-                    local MinimumTime = LeaderboardData.RecordTime.MinimumTime
+            if Character.HumanoidRootPart.Position.Z < CurrentEndNode.Value.Position.Z then
+                local CompletedTime = MatchTime - TimeLeft.Value
+                local MinimumTime = LeaderboardData.RecordTime.MinimumTime
 
-                    if CompletedTime < MinimumTime then
-                        Character:PivotTo(SpawnLocation.CFrame + Vector3.new(0, 5, 0))
-                        Reset:FireClient(Player) 
-                        warn("Completed lap too fast!")
-                        return 
-                    end
-
-                    self.WinnerCount += 1
-
-                    if self.WinnerCount == 1 then
-                        Player.Data.WheelSpins.Value += 1
-                    end
+                if CompletedTime >= MinimumTime then
+                    if Humanoid and Humanoid.Health > 0 then
+                        print(Humanoid.Health)
+                        local RecordTime = DataService:Get(Player, "RecordTime")
+                        
+                        self.WinnerCount += 1
     
-                    DisplayWinner:FireAllClients(Player.Name, self.WinnerCount)
-                    
-                    if CompletedTime < RecordTime then
-                        DataService:Set(Player, "RecordTime", CompletedTime)
+                        if self.WinnerCount == 1 then
+                            Player.Data.WheelSpins.Value += 1
+                        end
+        
+                        DisplayWinner:FireAllClients(Player.Name, self.WinnerCount)
+                        
+                        if CompletedTime < RecordTime then
+                            DataService:Set(Player, "RecordTime", CompletedTime)
+                        end
+                        
+                        local leaderstats = Player:FindFirstChild("leaderstats")
+                        local Wins = leaderstats:FindFirstChild("Wins")
+    
+                        if not Wins then return end
+    
+                        local CurrentWins = DataTypeHandler:StringToNumber(Wins.Value)
+                        Wins.Value = DataTypeHandler:NumberToString(CurrentWins + 1)
+    
+                        Character:PivotTo(SpawnLocation.CFrame + Vector3.new(0, 5, 0))
+                        Reset:FireClient(Player)
                     end
-                    
-                    local leaderstats = Player:FindFirstChild("leaderstats")
-                    local Wins = leaderstats:FindFirstChild("Wins")
-
-                    if not Wins then return end
-
-                    local CurrentWins = DataTypeHandler:StringToNumber(Wins.Value)
-                    Wins.Value = DataTypeHandler:NumberToString(CurrentWins + 1)
-
+                else
                     Character:PivotTo(SpawnLocation.CFrame + Vector3.new(0, 5, 0))
                     Reset:FireClient(Player)
-                else
-                    Reset:FireClient(Player)
-                end
+                    warn("Completed lap too fast!")
+                end    
             end
         end
 
@@ -234,10 +224,8 @@ end
 
 local function canUpdateLeaderboardData(ascending, data1, data2)
     if ascending then
-        print(data1, data2, data1 >= data2)
         if data1 >= data2 then return false end -- Data1 must be smaller than data2 to return true, example 100 seconds are less than 200 seconds
     else
-        print(data1, data2, data1 <= data2)
         if data1 <= data2 then return false end -- Data1 must be bigger than data2 to return true, example 5 wins are bigger than 3 wins
     end
 
@@ -245,45 +233,51 @@ local function canUpdateLeaderboardData(ascending, data1, data2)
 end
 
 function Game:RemovePlayer(Player)
-    if self.RegisteredPlayers[Player] then
-        self.RegisteredPlayers[Player].PlayerIcon:Destroy()
-        self.RegisteredPlayers[Player].TimeLeft:Disconnect()
-        self.RegisteredPlayers[Player] = nil
+	if self.RegisteredPlayers[Player] then
+		self.RegisteredPlayers[Player].PlayerIcon:Destroy()
+		self.RegisteredPlayers[Player].TimeLeft:Disconnect()
+		self.RegisteredPlayers[Player] = nil
 
-        local data = {
-            ["RecordTime"] = DataService:GetRemaster(Player, "RecordTime"),
-            ["MostWins"] = DataService:GetTableKey(Player, "leaderstats", "Wins")
-        }
+        --DataService:WipeKey(Player, "FastestTime")
 
-        DataService:WipeKey(Player, "FastestTime")
+		local data = {
+			["RecordTime"] = DataService:GetRemaster(Player, "RecordTime"),
+			["MostWins"] = DataService:GetTableKey(Player, "leaderstats", "Wins")
+		}
 
-        local leaderboards = CollectionService:GetTagged("Leaderboard")
-        
-        for _, leaderboard in leaderboards do
-            local datastore = DataStoreService:GetOrderedDataStore(leaderboard.Name)
-            local dataToSetTo = math.abs(tonumber(data[leaderboard.Name])) 
-            local leaderboardData = LeaderboardData[leaderboard.Name]
-            local entryHolder = leaderboard.LeaderboardGui.EntryHolder
-            local ascending = leaderboardData.Ascending
-            local finishedLoading = leaderboard:GetAttribute("FinishedLoading") or leaderboard:GetAttributeChangedSignal("FinishedLoading"):Wait()
-            local lowestValue = leaderboard:GetAttribute("LowestValue")
+		local leaderboards = CollectionService:GetTagged("Leaderboard")
 
-            if entryHolder:FindFirstChild(Player.Name) then
-                local entryData = entryHolder[Player.Name]:GetAttribute("Data")
+		for _, leaderboard in leaderboards do
+			local datastore = DataStoreService:GetOrderedDataStore(leaderboard.Name)
+			local dataToSetTo = math.abs(tonumber(data[leaderboard.Name])) 
+			local leaderboardData = LeaderboardData[leaderboard.Name]
+			local entryHolder = leaderboard.LeaderboardGui.EntryHolder
+			local ascending = leaderboardData.Ascending
+			local finishedLoading = leaderboard:GetAttribute("FinishedLoading") or leaderboard:GetAttributeChangedSignal("FinishedLoading"):Wait()
+			local lowestValue = leaderboard:GetAttribute("LowestValue")
 
-                local canUpdate = canUpdateLeaderboardData(ascending, dataToSetTo, entryData)
+			if entryHolder:FindFirstChild(Player.Name) then
+				local entryData = entryHolder[Player.Name]:GetAttribute("Data")
 
-                if not canUpdate then continue end
-            end
+				local canUpdate = canUpdateLeaderboardData(ascending, dataToSetTo, entryData)
 
-            if lowestValue then
-                local canUpdate = canUpdateLeaderboardData(ascending, dataToSetTo, lowestValue)
-                if not canUpdate then continue end
-            end
-        
-            datastore:SetAsync(Player.UserId, dataToSetTo)
-        end
-    end
+				if not canUpdate then 
+					warn("You are already on the leaderboard with the same data!", "Data: "..dataToSetTo, "CurrentData: "..entryData)
+					continue
+				end
+			end
+
+			if lowestValue then
+				local canUpdate = canUpdateLeaderboardData(ascending, dataToSetTo, lowestValue)
+				if not canUpdate then
+					warn("Your data is lower or equal to the minimum!", "Data: "..dataToSetTo, "Minimum: "..lowestValue)
+					continue 
+				end
+			end
+			
+			datastore:SetAsync(Player.UserId, dataToSetTo)
+		end
+	end
 end
 
 function Game:KnitInit()
@@ -294,6 +288,7 @@ function Game:KnitStart()
     repeat task.wait() until Knit.FullyStarted
 
     DataService = Knit.GetService("DataService")
+    GenService = Knit.GetService("GenService")
 
     self.GameState.Value = "Waiting"
     self.WinnerCount = 0
