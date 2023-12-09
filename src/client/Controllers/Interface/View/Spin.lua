@@ -49,12 +49,10 @@ function Spin.new(ScreenGui, Interface)
                 Button.Contents.Title.Text = string.format("R$ %s",ProductInfo.PriceInRobux)
             end
         end
-    
     end
 
     Player.SpinTime:GetPropertyChangedSignal("Value"):Connect(function()
         local IsInGroup =  Player:IsInGroup(33193007)
-
         if IsInGroup then
             SpinAmount = 3
         else
@@ -62,10 +60,9 @@ function Spin.new(ScreenGui, Interface)
         end
         self.Buttons.Spin1.NextSpin.Text = "+"..SpinAmount.." Spins In "..Player.SpinTime.Value.."."
     end)
-    
+
     self.WheelService:GetPrizes():andThen(function(Prizes)
         self.GetPrizes = Prizes
-        print(self.GetPrizes)
     end)
 
     self.RequestSpin = self.WheelService.RequestSpin

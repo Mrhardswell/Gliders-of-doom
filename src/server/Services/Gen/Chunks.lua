@@ -12,8 +12,6 @@ function GenerateAndPivotTo(Chunk, TargetPos : Vector3)
     assert(Chunk, "No chunk!")
     assert(TargetPos, "No target!")
 
-    print("Generating chunk " .. Chunk.Name .. " and pivoting to ", TargetPos)
-
     local Model = Chunk.Model:Clone()
     Model.Parent = CurrentMap
 

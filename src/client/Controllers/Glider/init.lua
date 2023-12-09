@@ -214,28 +214,28 @@ local function CharacterAdded(Character)
                     if Climb then
                         GoalCF = GoalCF * CFrame.Angles(math.rad(40), 0, 0)
                         if not Root:GetAttribute("Boost") then
-                            BodyThrust.Force = CameraCF.UpVector * (Modifier*2)^4
+                            BodyThrust.Force = CameraCF.UpVector * math.clamp((Modifier*2)^4, 0, MAX_FORCE)
                         end
                     end
 
                     if Dive then
                         GoalCF = GoalCF * CFrame.Angles(math.rad(-40), 0, 0)
                         if not Root:GetAttribute("Boost") then
-                            BodyThrust.Force = -CameraCF.UpVector * (Modifier *2)^4
+                            BodyThrust.Force = -CameraCF.UpVector * math.clamp((Modifier*2)^4, 0, MAX_FORCE)
                         end
                     end
 
                     if Right then
                         GoalCF = GoalCF * CFrame.Angles(0, math.rad(-40), math.rad(-30))
                         if not Root:GetAttribute("Boost") then
-                            BodyThrust.Force = CameraCF.LookVector * Modifier^4
+                            BodyThrust.Force = CameraCF.LookVector * math.clamp((Modifier*2)^4, 0, MAX_FORCE)
                         end
                     end
 
                     if Left then
                         GoalCF = GoalCF * CFrame.Angles(0, math.rad(40), math.rad(30))
                         if not Root:GetAttribute("Boost") then
-                            BodyThrust.Force = CameraCF.LookVector * Modifier^4
+                            BodyThrust.Force = CameraCF.LookVector * math.clamp((Modifier*2)^4, 0, MAX_FORCE)
                         end
                     end
 

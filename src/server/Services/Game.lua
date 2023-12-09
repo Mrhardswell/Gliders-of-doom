@@ -189,21 +189,19 @@ function Game:RegisterPlayer(Player)
 
                 if CompletedTime >= MinimumTime then
                     if Humanoid and Humanoid.Health > 0 then
-                        print(Humanoid.Health)
                         local RecordTime = DataService:Get(Player, "RecordTime")
-                        
+
                         self.WinnerCount += 1
-    
                         if self.WinnerCount == 1 then
                             Player.Data.WheelSpins.Value += 1
                         end
-        
+
                         DisplayWinner:FireAllClients(Player.Name, self.WinnerCount)
-                        
+
                         if CompletedTime < RecordTime then
                             DataService:Set(Player, "RecordTime", CompletedTime)
                         end
-                        
+
                         local leaderstats = Player:FindFirstChild("leaderstats")
                         local Wins = leaderstats:FindFirstChild("Wins")
     
@@ -219,7 +217,7 @@ function Game:RegisterPlayer(Player)
                     Character:PivotTo(SpawnLocation.CFrame + Vector3.new(0, 5, 0))
                     Reset:FireClient(Player)
                     warn("Completed lap too fast!")
-                end    
+                end
             end
         end
 
@@ -271,11 +269,10 @@ function Game:RemovePlayer(Player)
 
 			if entryHolder:FindFirstChild(Player.Name) then
 				local entryData = entryHolder[Player.Name]:GetAttribute("Data")
-
 				local canUpdate = canUpdateLeaderboardData(ascending, dataToSetTo, entryData)
 
-				if not canUpdate then 
-					warn("You are already on the leaderboard with the same data!", "Data: "..dataToSetTo, "CurrentData: "..entryData)
+				if not canUpdate then
+					print("You are already on the leaderboard with the same data!", "Data: "..dataToSetTo, "CurrentData: "..entryData)
 					continue
 				end
 			end
@@ -283,8 +280,8 @@ function Game:RemovePlayer(Player)
 			if lowestValue then
 				local canUpdate = canUpdateLeaderboardData(ascending, dataToSetTo, lowestValue)
 				if not canUpdate then
-					warn("Your data is lower or equal to the minimum!", "Data: "..dataToSetTo, "Minimum: "..lowestValue)
-					continue 
+					print("Your data is lower or equal to the minimum!", "Data: "..dataToSetTo, "Minimum: "..lowestValue)
+					continue
 				end
 			end
 			
@@ -295,6 +292,7 @@ function Game:RemovePlayer(Player)
             if not success then
                 warn(errorMessage)
             end
+
 		end
 	end
 end

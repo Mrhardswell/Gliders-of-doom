@@ -27,7 +27,6 @@ function DataService.Client:GetInitialData(Player)
 end
 
 local function CreateValues(Data, Player)
-	print(Data)
 	local leaderstats = Instance.new("Folder")
 	leaderstats.Name = "leaderstats"
 	leaderstats.Parent = Player

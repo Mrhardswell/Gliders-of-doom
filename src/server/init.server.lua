@@ -10,13 +10,11 @@ Knit.Private = require(ServerStorage.Private)
 local Message = Net:RemoteEvent("ServerMessage")
 
 Knit.Components = {}
-
 Knit.ServerMessage = Message
 
 for _, Component in script.Components:GetChildren() do
     if not Component:IsA("ModuleScript") then continue end
     Knit.Components[Component.Name] = require(Component)
-    print("Loaded Component: " .. Component.Name)
 end
 
 Knit.AddServices(script.Services)

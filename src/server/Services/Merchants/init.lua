@@ -77,10 +77,9 @@ function Merchants.Client:ClaimReward(Player, Reward)
         local CoinsNumber = DataTypeHandler:StringToNumber(Coins.Value)
 
         if Reward == "Group" then
-            Reward.Value = DataTypeHandler:AdaptiveNumberFormat(CoinsNumber + 1000, 4)
+            Coins.Value = DataTypeHandler:AdaptiveNumberFormat(CoinsNumber + 1000, 4)
         elseif Reward == "VIP" then
-            Reward.Value = DataTypeHandler:AdaptiveNumberFormat(CoinsNumber + 4000, 4)
-            
+            Coins.Value = DataTypeHandler:AdaptiveNumberFormat(CoinsNumber + 4000, 4)
             Player.Data.WheelSpins.Value += 1
         end
     end

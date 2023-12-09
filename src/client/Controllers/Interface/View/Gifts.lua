@@ -204,10 +204,13 @@ function Gifts.new(ScreenGui, Interface)
             end
         end
 
-        local NextRewardText = self.Rewards[NextReward].TimeLeft.Text
+        local _NextReward = self.Rewards[NextReward]
+        if not _NextReward then return end
+
+        local NextRewardText = _NextReward.TimeLeft.Text
         if NextRewardText == "Claimed" then
             NextReward = NextReward + 1
-            NextRewardText = self.Rewards[NextReward].TimeLeft.Text
+            NextRewardText = _NextReward.TimeLeft.Text
         end
 
         local TEXT = string.format("GIFT IN %s", NextRewardText)

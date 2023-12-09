@@ -139,7 +139,7 @@ function Store.new(ScreenGui, Interface)
                     local Item = ReplicatedStorage.Assets[_Data.Type]:FindFirstChild(ItemId)
 
                     if not Item then
-                        warn(_Data.Type.." Not Found", ItemId)
+                        print(_Data.Type.." Not Found", ItemId)
                         continue
                     end
 
