@@ -13,6 +13,8 @@ local DataTypeHandler = require(ReplicatedStorage.Shared.Modules.DataTypeHandler
 local Player = Players.LocalPlayer
 
 local CreateCoins = Net:RemoteEvent("CreateCoins")
+local ResetRing = Net:RemoteEvent("ResetRing")
+local SetRingCooldown = Net:RemoteEvent("SetRingCooldown")
 
 local CoinRing = Component.new {
     Tag = "CoinRing";
@@ -22,8 +24,9 @@ function CoinRing:Construct()
     self.Model = self.Instance
     self.Hitbox = self.Instance.PrimaryPart
     self.Ring = self.Model.Ring
-    self.CoinAmount = 50
+    self.CoinAmount = 5
     self.PlayerCooldowns = {}
+    self.OriginalSize = self.Ring.Size
 end
 
 function CoinRing.Start(self)
@@ -36,15 +39,20 @@ function CoinRing.Start(self)
         local character = Hit.Parent
         local player = Players:GetPlayerFromCharacter(character)
 
-        if self.PlayerCooldowns[player.Name] and os.time() - self.PlayerCooldowns[player.Name] < 30 then return end
+        if self.PlayerCooldowns[player.Name] then return end
 
-        self.PlayerCooldowns[player.Name] = os.time()
+        self.PlayerCooldowns[player.Name] = true
 
         local coins = player.leaderstats:WaitForChild("Coins")
         local coinsValue = DataTypeHandler:StringToNumber(coins.Value)
         local totalCoins = coinsValue + self.CoinAmount
         coins.Value = DataTypeHandler:AdaptiveNumberFormat(totalCoins, 2)
         CreateCoins:FireClient(player, self.Model)
+
+        task.wait(30)
+        ResetRing:FireClient(player, self.Model, self.OriginalSize)
+        
+        self.PlayerCooldowns[player.Name] = nil
     end)
 end
 

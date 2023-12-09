@@ -27,6 +27,13 @@ local GameUpdate = Net:RemoteEvent("GameUpdate")
 local Reset = Net:RemoteEvent("Reset")
 local DisplayWinner = Net:RemoteEvent("DisplayWinner")
 local CreateCoins = Net:RemoteEvent("CreateCoins")
+local ResetRing = Net:RemoteEvent("ResetRing")
+
+local SpawnLocation = workspace.Lobby.SpawnLocation
+
+local Nodes = CollectionService:GetTagged("Node")
+local CurrentMatch = nil
+local CurrentEndNode = Instance.new("ObjectValue", ReplicatedStorage)
 
 local MatchTime = 280
 local Current = 0
@@ -34,9 +41,13 @@ local Interval = 1
 
 local TimeLeft = Instance.new("NumberValue")
 TimeLeft.Parent = ReplicatedStorage
-
 TimeLeft.Name = "TimeLeft"
 TimeLeft.Value = MatchTime
+
+local orderedDatastores = {
+    ["MostWins"] = DataStoreService:GetOrderedDataStore("MostWins"),
+    ["RecordTime"] = DataStoreService:GetOrderedDataStore("RecordTime")
+}
 
 PhysicsService:RegisterCollisionGroup("Participants")
 PhysicsService:CollisionGroupSetCollidable("Participants", "Participants", false)
@@ -47,8 +58,6 @@ local Game = Knit.CreateService {
     GameState = Instance.new("StringValue"),
 }
 
-local Nodes = CollectionService:GetTagged("Node")
-local CurrentMatch = nil
 
 local function disableCollisions(character)
     for _, bodyPart in character:GetDescendants() do
@@ -67,7 +76,6 @@ function Game.Client:Respawn(Player, ActiveCheckpoint)
     Character:PivotTo(CFrame.new(ActiveCheckpoint:GetPivot().Position + Vector3.new(0,5,0)))
 end
 
-local CurrentEndNode = Instance.new("ObjectValue", ReplicatedStorage)
 
 function Game:StartTimer()
     if CurrentMatch then CurrentMatch:Disconnect() end
@@ -90,10 +98,9 @@ function Game:StartTimer()
         if Current >= Interval then
             Current = 0
             if TimeLeft.Value > 0 then
-                TimeLeft.Value = TimeLeft.Value - 1
+                TimeLeft.Value -= 1
             else
                 self:EndMatch()
-                TimeLeft.Value = MatchTime
             end
         end
     end)
@@ -104,17 +111,17 @@ function Game:EndMatch()
     self.GameState.Value = "Ended"
     self.WinnerCount = 0
 
+    TimeLeft.Value = MatchTime
     Reset:FireAllClients()
-    print("Match Ended")
+
+    print("Match ended!")
     self:StartTimer()
 end
-
-local SpawnLocation = workspace.Lobby.SpawnLocation
 
 function Game:RegisterPlayer(Player)
     if not self.RegisteredPlayers[Player] then
         self.RegisteredPlayers[Player] = {}
-        
+
         local Character = Player.Character or Player.CharacterAdded:Wait()
         local Humanoid = Character:WaitForChild("Humanoid")
         local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
@@ -238,7 +245,7 @@ function Game:RemovePlayer(Player)
 		self.RegisteredPlayers[Player].TimeLeft:Disconnect()
 		self.RegisteredPlayers[Player] = nil
 
-        --DataService:WipeKey(Player, "FastestTime")
+        DataService:WipeKey(Player, "FastestTime")
 
 		local data = {
 			["RecordTime"] = DataService:GetRemaster(Player, "RecordTime"),
@@ -248,7 +255,13 @@ function Game:RemovePlayer(Player)
 		local leaderboards = CollectionService:GetTagged("Leaderboard")
 
 		for _, leaderboard in leaderboards do
-			local datastore = DataStoreService:GetOrderedDataStore(leaderboard.Name)
+            local datastore = orderedDatastores[leaderboard.Name]
+
+            if not datastore then
+                warn("Datastore not found in table.")
+                continue
+            end
+            
 			local dataToSetTo = math.abs(tonumber(data[leaderboard.Name])) 
 			local leaderboardData = LeaderboardData[leaderboard.Name]
 			local entryHolder = leaderboard.LeaderboardGui.EntryHolder
@@ -275,7 +288,13 @@ function Game:RemovePlayer(Player)
 				end
 			end
 			
-			datastore:SetAsync(Player.UserId, dataToSetTo)
+            local success, errorMessage = pcall(function()
+                datastore:SetAsync(Player.UserId, dataToSetTo)
+            end)
+
+            if not success then
+                warn(errorMessage)
+            end
 		end
 	end
 end

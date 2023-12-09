@@ -21,7 +21,6 @@ function Pendalum:Construct()
     self.Pendalum:SetNetworkOwner(nil)
     self.HingeConstraint = self.Model.HingeConstraint
     self.Speed = self.Model:GetAttribute("Speed")
-
 end
 
 function Pendalum.Start(self)

@@ -128,8 +128,8 @@ function Fan.Start(self)
         task.wait(BoostTime)
 
         BodyThrust.Force = Vector3.new(0, 0, 0)
-
         Root:SetAttribute("Boost", false)
+
     end)
 
     self:Spin()

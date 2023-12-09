@@ -102,7 +102,7 @@ function Ragdoll.Client:CreateRagdoll(Player)
 
     resyncClothes(Player)
     removeGlider(Player)
-    print("Ragdoll created for " .. Player.Name)
+    
     return Model
 end
 

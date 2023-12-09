@@ -21,6 +21,11 @@ function Boost:Construct()
     self.Pad = self.Instance
     self.Mesh = self.Pad:FindFirstChildWhichIsA("MeshPart")
 
+    if self.Pad.Name == "CoinRing" then
+        self.Mesh = self.Pad.Ring
+        self.Pad = self.Pad.Hitbox        
+    end
+
     if self.Mesh then
         self.OriginalSize = self.Mesh.Size
         self.MeshTween = TweenService:Create(self.Mesh, Rings.TweenInfo, {Size = self.OriginalSize * 1.5, Transparency = 1})
@@ -51,6 +56,8 @@ function Boost.Start(self)
     end
 
     self.Pad.Touched:Connect(function(Hit)
+        if self.Pad.Parent:GetAttribute("Cooldown") then return end
+        
         local Root = Hit.Parent:FindFirstChild("HumanoidRootPart")
         local Humanoid = Hit.Parent:FindFirstChild("Humanoid")
         
@@ -85,8 +92,17 @@ function Boost.Start(self)
             end
         end
 
-        local PushPower = self.Pad:GetAttribute("PushPower")
-        local PushDirection = self.Pad:GetAttribute("PushDirection")
+        local PushPower
+        local PushDirection
+
+        if self.Pad.Parent.Name == "CoinRing" then
+            PushPower = self.Pad.Parent:GetAttribute("PushPower")
+            PushDirection = self.Pad.Parent:GetAttribute("PushDirection")
+        else
+            PushPower = self.Pad:GetAttribute("PushPower")
+            PushDirection = self.Pad:GetAttribute("PushDirection")
+        end
+
         local CurrentMass = getMass(Hit.Parent)
 
         if not Root:GetAttribute("Boost") then
@@ -101,24 +117,22 @@ function Boost.Start(self)
         local TargetForce = Vector3.new(0, PushPower + CurrentMass * PushDirection.Y, -math.abs(PushPower + CurrentMass * PushDirection.Z))
         local Tween = TweenService:Create(VectorForce, TweenInfo.new(.2, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Force = TargetForce + CurrentForce})
 
-        if self.Mesh then
+        if self.Mesh and self.Pad.Parent.Name ~= "CoinRing" then
+            SFX.Boost:Play()
             self.MeshTween:Play()
             self.Mesh.Color = Rings.Used
             task.delay(0.3,function()
                 self.Mesh.Color = Rings.Normal
             end)
+
+            Tween:Play()
+            Tween.Completed:Wait()
+            Tween:Destroy()
         end
 
         Character:SetAttribute("AcumulatedForce", TargetForce.Z)
 
-        SFX.Boost:Play()
-
-        Tween:Play()
-        Tween.Completed:Wait()
-        Tween:Destroy()
-
         Root:SetAttribute("Boost", false)
-
     end)
 end
 

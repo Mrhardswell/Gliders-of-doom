@@ -43,6 +43,7 @@ local function GetRandomChunk()
     local RandomChunk = ChunksMeta[RandomIndex]
 
     if Cache[RandomChunk.Name] then
+        task.wait()
         return GetRandomChunk()
     end
 
@@ -57,14 +58,15 @@ local function GetRandomChunk()
 end
 
 function GenService:GenerateMap()
-    if #Cache > 0 then Clear() end
+    if Cache ~= {} then
+        Clear()
+    end
 
     local Current = 0
 
     -- Chunks
     for Index = 1, ChunkAmount.Value do
-        local Chunk = GetRandomChunk()
-        print("Picked Chunk: " .. Chunk.Name .. "!")
+        GetRandomChunk()
         Current = Index
     end
 
@@ -79,7 +81,6 @@ function GenService:GenerateMap()
     End.Parent = CurrentMap
     End:PivotTo(Last.Nodes.B.CFrame)
 
-    print("Done!, generated " .. ChunkAmount.Value .. " chunks!")
 end
 
 return GenService

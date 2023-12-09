@@ -24,9 +24,9 @@ Items["Gamepass"][1] = 656809264 -- VIP
 Items["Gamepass"][2] = 652764638 -- Batwing Glider
 Items["Gamepass"][3] = 655593490 -- 2x Coins
 Items["Gamepass"][4] = 647946037 -- 2x Wins 
-Items["Gamepass"][5] = 667487004 -- Meme Bundle
-Items["Gamepass"][6] = 667826914 -- Robot Bundle
-Items["Gamepass"][7] = 666963418 -- Fantasy Bundle
+--Items["Gamepass"][5] = 667487004 -- Meme Bundle
+--Items["Gamepass"][6] = 667826914 -- Robot Bundle
+--Items["Gamepass"][7] = 666963418 -- Fantasy Bundle
 
 Items["Gliders"][1] = {
 
@@ -162,7 +162,7 @@ Items["Gliders"][1] = {
 
     ["Batwings Glider"] = {
         Name = "Batwings Glider";
-        Price = "529 Robux";
+        Price = "129 Robux";
         Gamepass = 652764638;
         Image = "rbxassetid://0";
         Description = "A Batwing glider";

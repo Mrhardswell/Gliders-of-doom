@@ -167,7 +167,10 @@ local function CharacterAdded(Character)
             end)
 
             Connections["RunService"] = RunService.Heartbeat:Connect(function(deltaTime)
-                if Humanoid:GetState() == (Enum.HumanoidStateType.Freefall or Enum.HumanoidStateType.FallingDown) then
+                local State = Humanoid:GetState()
+
+                if State == (Enum.HumanoidStateType.Freefall or Enum.HumanoidStateType.FallingDown) then
+
                     local Root = Character:FindFirstChild("HumanoidRootPart")
                     if not Root then return end
 
@@ -177,7 +180,7 @@ local function CharacterAdded(Character)
                     thrustMagnitude = getMass(Character)
 
                     BodyGyro.MaxTorque = Vector3.new(math.huge, 300, 500)
-                
+
                     -- Keyboard Inputs
                     local Forward = Keyboard:IsKeyDown(Enum.KeyCode.W) or Keyboard:IsKeyDown(Enum.KeyCode.Up) or MobileControls.Up:GetAttribute("Pressed")
                     local Right = Keyboard:IsKeyDown(Enum.KeyCode.D) or Keyboard:IsKeyDown(Enum.KeyCode.Right) or MobileControls.Right:GetAttribute("Pressed")
@@ -211,28 +214,28 @@ local function CharacterAdded(Character)
                     if Climb then
                         GoalCF = GoalCF * CFrame.Angles(math.rad(40), 0, 0)
                         if not Root:GetAttribute("Boost") then
-                            BodyThrust.Force = CameraCF.UpVector * Modifier^5
+                            BodyThrust.Force = CameraCF.UpVector * (Modifier*2)^4
                         end
                     end
 
                     if Dive then
                         GoalCF = GoalCF * CFrame.Angles(math.rad(-40), 0, 0)
                         if not Root:GetAttribute("Boost") then
-                            BodyThrust.Force = -CameraCF.UpVector * Modifier^5
+                            BodyThrust.Force = -CameraCF.UpVector * (Modifier *2)^4
                         end
                     end
 
                     if Right then
                         GoalCF = GoalCF * CFrame.Angles(0, math.rad(-40), math.rad(-30))
                         if not Root:GetAttribute("Boost") then
-                            BodyThrust.Force = CameraCF.LookVector * Modifier^2
+                            BodyThrust.Force = CameraCF.LookVector * Modifier^4
                         end
                     end
 
                     if Left then
                         GoalCF = GoalCF * CFrame.Angles(0, math.rad(40), math.rad(30))
                         if not Root:GetAttribute("Boost") then
-                            BodyThrust.Force = CameraCF.LookVector * Modifier^2
+                            BodyThrust.Force = CameraCF.LookVector * Modifier^4
                         end
                     end
 
@@ -260,12 +263,13 @@ local function CharacterAdded(Character)
 
                         local Mass = getMass(Character)
                         local Weight = Mass * workspace.Gravity
+
                         local Velocity = Character.HumanoidRootPart.Velocity.Magnitude
                         local DragForceMagnitude = DRAG_COEFFICIENT * AirDensity * Velocity^2
                         local DragForce = Vector3.new(0, 0, -math.clamp(DragForceMagnitude, 0, 2000))* 120
 
                         local Force = Vector3.new(0, Weight, Root.Velocity.Z + AcumulatedForce)
-                        local TotalForce = Force + Vector3.new(0, math.abs(Root.Velocity.Y) + Weight, 0) + DragForce / 20
+                        local TotalForce = Force + Vector3.new(0, math.abs(Root.Velocity.Y) + Weight, 0) + DragForce / 10
                         local maintainYForce = calculateMaintainYForce(Character)
 
                         TotalForce = TotalForce + Vector3.new(0, maintainYForce/2, 0)

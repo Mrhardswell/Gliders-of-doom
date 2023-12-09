@@ -74,8 +74,8 @@ local function TrackCharacter(Character : Model)
     Humanoid.Died:Connect(function()
         if Connection then Connection:Disconnect() end
         task.wait(3)
+        GameService:Respawn(ActiveCheckpoint.Value):await()
         Character:Destroy()
-        GameService:Respawn(ActiveCheckpoint.Value)
     end)
 
     ActiveCheckpoint.Changed:Connect(function()

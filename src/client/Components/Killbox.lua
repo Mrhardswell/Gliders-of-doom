@@ -40,8 +40,6 @@ function Killbox.Start(self)
 
         Humanoid.Health = 0
 
-        HumanoidRootPart.Velocity = HumanoidRootPart.Velocity * 0.5
-
     end)
 
 end

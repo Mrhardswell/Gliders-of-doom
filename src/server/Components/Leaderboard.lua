@@ -63,9 +63,23 @@ function Leaderboard:Cleanup()
 end
 
 function Leaderboard:Update()
+    if not self.OrderedDataStore then
+        warn("Datastore not found in component.")
+        return
+    end
+
     local ascending = LeaderboardData[self.Leaderboard.Name].Ascending
 	local pageSize = 25
-	local pages = self.OrderedDataStore:GetSortedAsync(ascending, pageSize)
+    
+    local success, pages = pcall(function()
+        return self.OrderedDataStore:GetSortedAsync(ascending, pageSize)
+    end)
+
+    if not success then
+        warn("The GetSortedAsync call has ran into an error.")
+        return
+    end
+
 	local currentPage = pages:GetCurrentPage()
     local lowestValue
 
@@ -76,6 +90,9 @@ function Leaderboard:Update()
 	for rank, data in currentPage do
         local userId = data.key
         local name = Players:GetNameFromUserIdAsync(userId)
+
+        if not name then return end
+
 		local data = data.value
         lowestValue = data
 
@@ -119,8 +136,8 @@ function Leaderboard:Update()
             local entryTemplate = self.EntryTemplate:Clone()
 
             if userId then
-                local thumbnailIcon = Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
-                entryTemplate.Icon.Image = thumbnailIcon
+                local thumbnailIcon, isReady = Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
+                entryTemplate.Icon.Image = (isReady and thumbnailIcon) or "rbxassetid://15583138469"
             end
 
             local dataToSetTo = data

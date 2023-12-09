@@ -1,6 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local MarketplaceService = game:GetService("MarketplaceService")
 local ServerStorage = game:GetService("ServerStorage")
+local Players = game:GetService("Players")
 
 local Remotes = ReplicatedStorage.RemoteEvents
 local SpinWheel = Remotes.SpinWheel
@@ -20,6 +21,8 @@ local Rewards = {
 	["4"] = 2,
 	["5"] = 3,
 }
+
+local ActiveCountdowns = {}
 
 local function getRandomReward()
 	local TotalRewardsWeight = 0
@@ -83,14 +86,14 @@ SpinWheel.OnServerEvent:Connect(function(player)
 end)
 
 -- Wheel Spins
-local function IncrementWheelSpins(player)
+local function IncrementWheelSpins(Player)
 	local SpinsAmount = 1
 
-	if player:IsInGroup(33193007) then
+	if Player:IsInGroup(33193007) then
 		SpinsAmount += 2
 	end
 
-	player.Data.WheelSpins.Value += SpinsAmount
+	Player.Data.WheelSpins.Value += SpinsAmount
 end
 
 local HourSeconds = 3600
@@ -101,7 +104,7 @@ local function CountdownHour(Player)
     local JoinDate = os.date("!*t", JoinTime)
     local SecondsLeft = HourSeconds 
 
-    while os.time() < JoinTime + HourSeconds and Player do
+    while os.time() < JoinTime + HourSeconds and ActiveCountdowns[Player.UserId] do
         SecondsLeft = JoinTime + HourSeconds - os.time()
 
         local hours = math.floor(SecondsLeft / 3600)
@@ -112,11 +115,19 @@ local function CountdownHour(Player)
         task.wait(1)
     end
 
-    IncrementWheelSpins(Player)
+	if ActiveCountdowns[Player.UserId] and Players:FindFirstChild(Player.Name) then
+		IncrementWheelSpins(Player)
+	end
 end
 
-game.Players.PlayerAdded:Connect(function(Player)
-	while Player do
+Players.PlayerAdded:Connect(function(Player)
+	ActiveCountdowns[Player.UserId] = true
+
+	while ActiveCountdowns[Player.UserId] do
 		CountdownHour(Player)
 	end
+end)
+
+Players.PlayerRemoving:Connect(function(Player)
+	ActiveCountdowns[Player.Name] = nil
 end)

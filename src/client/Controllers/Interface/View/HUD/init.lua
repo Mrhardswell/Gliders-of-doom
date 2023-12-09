@@ -75,11 +75,11 @@ local function HandleButton(Button, Interface)
 end
 
 local targetDate = os.time({
-    year = 2023, 
+    year = 2023,
     month = 12,
-    day = 8, 
-    hour = 19, 
-    min = 0, 
+    day = 16,
+    hour = 18,
+    min = 0,
     sec = 0
 })
 
