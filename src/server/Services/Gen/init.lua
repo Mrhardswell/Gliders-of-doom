@@ -14,7 +14,9 @@ local GenService = Knit.CreateService {
     Client = {},
 }
 
-local CurrentMap = Instance.new("Folder", workspace)
+local isCurrentMap = workspace:FindFirstChild("CurrentMap") ~= nil
+
+local CurrentMap = isCurrentMap and workspace.CurrentMap or Instance.new("Folder")
 CurrentMap.Name = "CurrentMap"
 
 local Lobby = CollectionService:GetTagged("Lobby")[1]
@@ -58,9 +60,7 @@ local function GetRandomChunk()
 end
 
 function GenService:GenerateMap()
-    if Cache ~= {} then
-        Clear()
-    end
+    Clear()
 
     local Current = 0
 
@@ -77,8 +77,8 @@ function GenService:GenerateMap()
     local End = Chunk_End:Clone()
 
     End.Assets.End:SetAttribute("End", true)
-
     End.Parent = CurrentMap
+
     End:PivotTo(Last.Nodes.B.CFrame)
 
 end

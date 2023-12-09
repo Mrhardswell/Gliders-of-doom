@@ -41,7 +41,7 @@ local UPWARD_ANGLE_THRESHOLD = 0.2
 local UPWARD_SPEED_FACTOR = 0.8 -- The higher the value, the faster the player will go up
 local DOWNWARD_SPEED_FACTOR = 1
 local DRAG_COEFFICIENT = 1 
-local MAX_FORCE = 1600 -- In Newtons
+local MAX_FORCE = 2000 -- In Newtons
 
 local AirDensity = 1.225 -- In kg/m^3
 

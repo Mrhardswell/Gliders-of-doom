@@ -51,8 +51,7 @@ function CharacterController:KnitStart()
     self.Connections = {}
 
     RagdollService = Knit.GetService("RagdollService")
-
-    task.spawn(CharacterAdded, self.Player.Character or self.Player.CharacterAdded:Wait())
+    CharacterAdded(self.Player.Character or self.Player.CharacterAdded:Wait())
 
     self.Player.CharacterAdded:Connect(CharacterAdded)
     self.Player.CharacterRemoving:Connect(CharacterRemoving)

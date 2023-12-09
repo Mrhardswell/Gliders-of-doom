@@ -192,15 +192,14 @@ function Hud.new(ScreenGui, Interface)
         self.ValueDisplays.Coins.Amount.Text = Coins.Value
         SoundService.UI.Coin:Play()
         if not CoinIcon then return end
-        local CoinIconSize = CoinIcon.Size
-
-
+        
+        local OriginalSize = CoinIcon.Size
         local Tween = TweenService:Create(CoinIcon, Tween_Infos.PopUp, {
-            Size = CoinIconSize + UDim2.new(0, 5, 0, 5);
+            Size = OriginalSize + UDim2.new(0, 5, 0, 5);
         })
-
+        
         local TextTween = TweenService:Create(self.ValueDisplays.Coins.Amount, Tween_Infos.PopUp, {
-            Size = self.ValueDisplays.Coins.Amount.Size + UDim2.new(0, 5, 0, 5);
+            Size = OriginalSize + UDim2.new(0, 5, 0, 5);
         })
 
         Tween:Play()

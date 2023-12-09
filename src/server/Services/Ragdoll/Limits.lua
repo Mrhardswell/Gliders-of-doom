@@ -54,8 +54,8 @@ RagdollLimit.SHOULDER_LIMITS = {
 	UpperAngle = 110,
 	TwistLowerAngle = -75,
 	TwistUpperAngle = 75,
-	FrictionTorque = 550,
-	ReferenceMass = 0.90918225049973,
+	FrictionTorque = 750,
+	ReferenceMass = 1,
 }
 
 RagdollLimit.HIP_LIMITS = {

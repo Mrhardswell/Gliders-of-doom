@@ -24,7 +24,7 @@ function CoinRing:Construct()
     self.Model = self.Instance
     self.Hitbox = self.Instance.PrimaryPart
     self.Ring = self.Model.Ring
-    self.CoinAmount = 5
+    self.CoinAmount = 10
     self.PlayerCooldowns = {}
     self.OriginalSize = self.Ring.Size
 end
@@ -35,7 +35,7 @@ function CoinRing.Start(self)
 
         if not humanoid then return end
         if humanoid.Health <= 0 then return end
-        
+
         local character = Hit.Parent
         local player = Players:GetPlayerFromCharacter(character)
 
@@ -46,13 +46,14 @@ function CoinRing.Start(self)
         local coins = player.leaderstats:WaitForChild("Coins")
         local coinsValue = DataTypeHandler:StringToNumber(coins.Value)
         local totalCoins = coinsValue + self.CoinAmount
-        coins.Value = DataTypeHandler:AdaptiveNumberFormat(totalCoins, 2)
+        coins.Value = DataTypeHandler:StringToNumber(totalCoins)
         CreateCoins:FireClient(player, self.Model)
 
-        task.wait(30)
-        ResetRing:FireClient(player, self.Model, self.OriginalSize)
-        
-        self.PlayerCooldowns[player.Name] = nil
+        task.delay(30, function()
+            ResetRing:FireClient(player, self.Model, self.OriginalSize)
+            self.PlayerCooldowns[player.Name] = nil
+        end)
+
     end)
 end
 
