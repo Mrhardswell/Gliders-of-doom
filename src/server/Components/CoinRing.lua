@@ -45,8 +45,9 @@ function CoinRing.Start(self)
 
         local coins = player.leaderstats:WaitForChild("Coins")
         local coinsValue = DataTypeHandler:StringToNumber(coins.Value)
-        local totalCoins = coinsValue + self.CoinAmount
-        coins.Value = DataTypeHandler:StringToNumber(totalCoins)
+
+        coins.Value = DataTypeHandler:NumberToString(coinsValue + self.CoinAmount)
+        
         CreateCoins:FireClient(player, self.Model)
 
         task.delay(30, function()

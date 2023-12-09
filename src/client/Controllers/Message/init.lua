@@ -75,7 +75,7 @@ Net:Connect("GameMessage", function(Message)
 end)
 
 local WinnerTextTable = {
-    [1] = "%s has finished in First Place and got 1 Spin!",
+    [1] = "%s has finished in First Place!",
     [2] = "%s has finished in Second Place!",
     [3] = "%s has finished in Third Place!"
 }

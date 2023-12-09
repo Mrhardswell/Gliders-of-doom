@@ -122,6 +122,7 @@ function CoinRingController:KnitStart()
 
     Net:Connect("ResetRing", function(model, originalSize)
         if not model then return end
+        
         model:SetAttribute("Cooldown", false)
         model.Ring.Size = originalSize
         model.Ring.Transparency = 0.15

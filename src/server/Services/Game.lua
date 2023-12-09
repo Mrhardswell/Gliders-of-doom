@@ -192,9 +192,6 @@ function Game:RegisterPlayer(Player)
                         local RecordTime = DataService:Get(Player, "RecordTime")
 
                         self.WinnerCount += 1
-                        if self.WinnerCount == 1 then
-                            Player.Data.WheelSpins.Value += 1
-                        end
 
                         DisplayWinner:FireAllClients(Player.Name, self.WinnerCount)
 
@@ -204,9 +201,13 @@ function Game:RegisterPlayer(Player)
 
                         local leaderstats = Player:FindFirstChild("leaderstats")
                         local Wins = leaderstats:FindFirstChild("Wins")
+                        local Coins = leaderstats:FindFirstChild("Coins")
     
-                        if not Wins then return end
-    
+                        if not Wins or not Coins then return end
+                        
+                        local CurrentCoins = DataTypeHandler:StringToNumber(Coins.Value)
+                        Coins.Value = DataTypeHandler:NumberToString(CurrentCoins + 200)
+
                         local CurrentWins = DataTypeHandler:StringToNumber(Wins.Value)
                         Wins.Value = DataTypeHandler:NumberToString(CurrentWins + 1)
     
