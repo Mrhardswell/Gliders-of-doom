@@ -265,8 +265,15 @@ function Game:RemovePlayer(Player)
 			local leaderboardData = LeaderboardData[leaderboard.Name]
 			local entryHolder = leaderboard.LeaderboardGui.EntryHolder
 			local ascending = leaderboardData.Ascending
+            local pages = leaderboardData.Pages
 			local finishedLoading = leaderboard:GetAttribute("FinishedLoading") or leaderboard:GetAttributeChangedSignal("FinishedLoading"):Wait()
 			local lowestValue = leaderboard:GetAttribute("LowestValue")
+            local entries = leaderboard:GetAttribute("Entries")
+
+            local ascendingErrorMessage = ascending and 
+            "Your data is higher or equal to the minimum!"
+            or
+            "Your data is lower or equal to the minimum!"
 
 			if entryHolder:FindFirstChild(Player.Name) then
 				local entryData = entryHolder[Player.Name]:GetAttribute("Data")
@@ -279,11 +286,14 @@ function Game:RemovePlayer(Player)
 			end
 
 			if lowestValue then
-				local canUpdate = canUpdateLeaderboardData(ascending, dataToSetTo, lowestValue)
-				if not canUpdate then
-					print("Your data is lower or equal to the minimum!", "Data: "..dataToSetTo, "Minimum: "..lowestValue)
-					continue
-				end
+                if entries >= pages then
+                    local canUpdate = canUpdateLeaderboardData(ascending, dataToSetTo, lowestValue)
+
+                    if not canUpdate then
+                        print(ascendingErrorMessage, "Data: "..dataToSetTo, "Minimum: "..lowestValue)
+                        continue
+                    end 
+                end
 			end
 			
             local success, errorMessage = pcall(function()
@@ -291,7 +301,7 @@ function Game:RemovePlayer(Player)
             end)
 
             if not success then
-                warn(errorMessage)
+                print(errorMessage)
             end
 
 		end

@@ -5,7 +5,7 @@ local LeaderboardData = {
         Pages = 25,
         MinimumTime = 20,
     },
-
+    
     ["MostWins"] = {
         Title = "MOST WINS",
         Ascending = false,

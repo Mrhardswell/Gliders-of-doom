@@ -20,6 +20,7 @@ local rankColors = {
 local Leaderboard = Knit.Component.new {
     Tag = "Leaderboard";
 }
+
 function Leaderboard:Construct()
     self.Leaderboard = self.Instance
     self.LeaderboardGui = self.Leaderboard.LeaderboardGui
@@ -60,6 +61,54 @@ function Leaderboard:Cleanup()
     end
 
     self.LoadedAnimations = {}
+    self.Leaderboard:SetAttribute("Entries", 0)
+end
+
+function Leaderboard:HandleTop3(rank, name, userId)
+    local descriptionSuccess, humanoidDescription = pcall(function()
+        return Players:GetHumanoidDescriptionFromUserId(userId)
+    end)
+
+    if not descriptionSuccess then return end
+
+    local characterSuccess, character = pcall(function()
+        return Players:CreateHumanoidModelFromDescription(humanoidDescription, Enum.HumanoidRigType.R15)
+    end)
+
+    if not characterSuccess then return end
+
+    local animationToLoad 
+
+    while animationToLoad == nil do
+        local randomNumber = math.random(1, #self.DanceAnimations:GetChildren())
+        local randomAnimation = self.DanceAnimations:GetChildren()[randomNumber]
+
+        if self.LoadedAnimations[randomNumber] then continue end
+
+        animationToLoad = randomAnimation
+        self.LoadedAnimations[randomNumber] = true
+    end
+
+    local rankTag = self.RankTags[rank]
+    local rankPosition = self.RankPositions[rank]
+
+    rankTag = rankTag:Clone()
+    rankTag.Parent = character
+    rankTag.Adornee = character.Head
+
+    local heightScale = humanoidDescription.HeightScale
+    local typeScale = humanoidDescription.BodyTypeScale
+    local proportionScale = humanoidDescription.ProportionScale
+    local heightAdjustment = (heightScale*(4 + typeScale*(math.pi/2 - 0.6*proportionScale)) + 1) - 5.1
+    
+    character.Humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+    character.Name = name
+    character.HumanoidRootPart.Anchored = true
+    character:PivotTo(rankPosition.CFrame * rankPosition.Spawn.CFrame * CFrame.new(0, heightAdjustment, 0))
+    character.Parent = self.RankedCharacters
+
+    local animation = character:WaitForChild("Humanoid").Animator:LoadAnimation(animationToLoad)
+    animation:Play()
 end
 
 function Leaderboard:Update()
@@ -89,50 +138,24 @@ function Leaderboard:Update()
 
 	for rank, data in currentPage do
         local userId = data.key
-        local name = Players:GetNameFromUserIdAsync(userId)
+
+        local success, name = pcall(function()
+            return Players:GetNameFromUserIdAsync(userId)
+        end)
 
         if not name then return end
 
 		local data = data.value
         lowestValue = data
 
+        print(self.Leaderboard.Name, rank, name, data)
+
         if rank >= 1 and rank <= 3 then
-            local animationToLoad 
-
-            while animationToLoad == nil do
-                local randomNumber = math.random(1, #self.DanceAnimations:GetChildren())
-                local randomAnimation = self.DanceAnimations:GetChildren()[randomNumber]
-
-                if self.LoadedAnimations[randomNumber] then continue end
-
-                animationToLoad = randomAnimation
-                self.LoadedAnimations[randomNumber] = true
-            end
-
-            local humanoidDescription = Players:GetHumanoidDescriptionFromUserId(userId)
-            local character = Players:CreateHumanoidModelFromDescription(humanoidDescription, Enum.HumanoidRigType.R15)
-            local rankTag = self.RankTags[rank]
-            local rankPosition = self.RankPositions[rank]
-            local heightScale = humanoidDescription.HeightScale
-            local typeScale = humanoidDescription.BodyTypeScale
-            local proportionScale = humanoidDescription.ProportionScale
-            local heightAdjustment = (heightScale*(4 + typeScale*(math.pi/2 - 0.6*proportionScale)) + 1) - 5.1
-            
-            rankTag = rankTag:Clone()
-            rankTag.Parent = character
-            rankTag.Adornee = character.Head 
-
-            character.Humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
-            character.Name = name
-            character.HumanoidRootPart.Anchored = true
-            character:PivotTo(rankPosition.CFrame * rankPosition.Spawn.CFrame * CFrame.new(0, heightAdjustment, 0))
-            character.Parent = self.RankedCharacters
-
-            local animation = character:WaitForChild("Humanoid").Animator:LoadAnimation(animationToLoad)
-            animation:Play()
+            self:HandleTop3(rank, name, userId)
         end
 
         if data then
+            self.Leaderboard:SetAttribute("Entries", self.Leaderboard:GetAttribute("Entries") + 1)
             local entryTemplate = self.EntryTemplate:Clone()
 
             if userId then

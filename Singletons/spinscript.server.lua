@@ -87,13 +87,15 @@ end)
 
 -- Wheel Spins
 local function IncrementWheelSpins(Player)
-	local SpinsAmount = 1
+	if Player and Player.Parent and ActiveCountdowns[Player.UserId] and Players:FindFirstChild(Player.Name) then
+		local SpinsAmount = 1
 
-	if Player:IsInGroup(33193007) then
-		SpinsAmount += 2
-	end
-
-	Player.Data.WheelSpins.Value += SpinsAmount
+		if Player:IsInGroup(33193007) then
+			SpinsAmount += 2
+		end
+	
+		Player.Data.WheelSpins.Value += SpinsAmount
+	end	
 end
 
 local HourSeconds = 3600
@@ -115,9 +117,8 @@ local function CountdownHour(Player)
         task.wait(1)
     end
 
-	if ActiveCountdowns[Player.UserId] and Players:FindFirstChild(Player.Name) then
-		IncrementWheelSpins(Player)
-	end
+	
+	IncrementWheelSpins(Player)
 end
 
 Players.PlayerAdded:Connect(function(Player)
