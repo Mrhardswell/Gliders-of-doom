@@ -24,7 +24,7 @@ function CoinRing:Construct()
     self.Model = self.Instance
     self.Hitbox = self.Instance.PrimaryPart
     self.Ring = self.Model.Ring
-    self.CoinAmount = 10
+    self.CoinAmount = 50
     self.PlayerCooldowns = {}
     self.OriginalSize = self.Ring.Size
 end

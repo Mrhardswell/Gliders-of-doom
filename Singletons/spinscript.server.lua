@@ -51,7 +51,7 @@ local UGCID3 = GameSettings.UGCID3.Value
 local UGCID4 = GameSettings.UGCID4.Value
 
 SpinWheel.OnServerEvent:Connect(function(player)
-    local leaderstats = player:WaitForChild("leaderstats")
+	local leaderstats = player:WaitForChild("leaderstats")
 	local Coins = leaderstats:WaitForChild("Coins")
 	local CurrentCoins = DataTypeHandler:StringToNumber(Coins.Value)
 
@@ -69,7 +69,7 @@ SpinWheel.OnServerEvent:Connect(function(player)
 					UGCService:AwardUGC(player, UGCID2)
 				elseif reward == "2" then
 					task.wait(4)
-					Coins.Value = DataTypeHandler:NumberToString(CurrentCoins + 5000)
+					Coins.Value = DataTypeHandler:NumberToString(CurrentCoins + 1000)
 				elseif reward == "3" then
 					task.wait(4)
 					UGCService:AwardUGC(player, UGCID3)
@@ -93,7 +93,7 @@ local function IncrementWheelSpins(Player)
 		if Player:IsInGroup(33193007) then
 			SpinsAmount += 2
 		end
-	
+
 		Player.Data.WheelSpins.Value += SpinsAmount
 	end	
 end
@@ -102,22 +102,22 @@ local HourSeconds = 3600
 
 local function CountdownHour(Player)
 	local SpinTime = Player:WaitForChild("SpinTime")
-    local JoinTime = os.time()
-    local JoinDate = os.date("!*t", JoinTime)
-    local SecondsLeft = HourSeconds 
+	local JoinTime = os.time()
+	local JoinDate = os.date("!*t", JoinTime)
+	local SecondsLeft = HourSeconds 
 
-    while os.time() < JoinTime + HourSeconds and ActiveCountdowns[Player.UserId] do
-        SecondsLeft = JoinTime + HourSeconds - os.time()
+	while os.time() < JoinTime + HourSeconds and ActiveCountdowns[Player.UserId] do
+		SecondsLeft = JoinTime + HourSeconds - os.time()
 
-        local hours = math.floor(SecondsLeft / 3600)
-        local minutes = math.floor((SecondsLeft % 3600) / 60)
-        local seconds = SecondsLeft % 60
+		local hours = math.floor(SecondsLeft / 3600)
+		local minutes = math.floor((SecondsLeft % 3600) / 60)
+		local seconds = SecondsLeft % 60
 
 		SpinTime.Value = string.format("%02dh %02dm %02ds", hours, minutes, seconds)
-        task.wait(1)
-    end
+		task.wait(1)
+	end
 
-	
+
 	IncrementWheelSpins(Player)
 end
 
